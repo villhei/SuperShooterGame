@@ -34,9 +34,9 @@ function init() {
     gameTickCount = 0;
     connect.createServer(
         connect.static(__dirname + "/public")
-    ).listen(8080);
+    ).listen(process.env.PORT || 5000);
 
-    socket = io.listen(8000);
+    socket = io.listen(5000);
 
     socket.configure(function () {
         socket.set("transports", ["websocket"]);
