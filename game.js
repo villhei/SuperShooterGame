@@ -34,7 +34,7 @@ function init() {
     gameTickCount = 0;
     connect.createServer(
         connect.static(__dirname + "/public")
-    ).listen(80);
+    ).listen(8080);
 
     socket = io.listen(8000);
 
