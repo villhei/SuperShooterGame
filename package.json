@@ -1,0 +1,29 @@
+{
+    "name": "SuperShooterGame",
+    "version": "0.0.0",
+    "description": "",
+    "main": "game.js",
+    "dependencies": {
+        "connect": "~2.13.0",
+        "socket.io": "~0.9.16"
+    },
+    "devDependencies": {},
+    "scripts": {
+        "test": "echo \"Error: no test specified\" && exit 1"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git://github.com/zzats/socketGame.git"
+    },
+    "author": "Ville Heikkinen",
+    "license": "ISC",
+    "bugs": {
+        "url": "https://github.com/zzats/socketGame/issues"
+    },
+    "homepage": "https://github.com/zzats/socketGame",
+
+    "engines": {
+        "node": "0.10.25"
+    }
+
+}
