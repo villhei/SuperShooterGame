@@ -11,7 +11,7 @@
 	</head>
 	
 	<body>
-		<canvas id="gameCanvas" style="border: 1px solid black"></canvas>
+		<canvas id="gameCanvas" style="border: 1px solid white"></canvas>
         <label for="playerName">Name:</label>
         <input type="text" id="playerName" value="WebClient">
         <button id="setName" onclick="setName()">Set</button>
@@ -20,8 +20,11 @@
                 var exports = this['mymodule'] = {};
             }
         </script>
-        <script src="http://sheltered-river-8737.herokuapp.com:5000/socket.io/socket.io.js"></script>
+        <script src="http://tunkki.plop.fi:8888/socket.io/socket.io.js"></script>
         <script src="commonjs/GameState.js"></script>
+        <script src="commonjs/Ship.js"></script>
+        <script src="commonjs/Vector.js"></script>
+        <script src="commonjs/Projectile.js"></script>
         <script src="commonjs/Player.js"></script>
         <script src="js/requestAnimationFrame.js"></script>
 		<script src="js/Keys.js"></script>

@@ -5,12 +5,16 @@ var Keys = function(up, left, right, down) {
 	var up = up || false,
 		left = left || false,
 		right = right || false,
-		down = down || false;
+		down = down || false,
+        space = space || false;
 		
 	var onKeyDown = function(e) {
 		var that = this,
 			c = e.keyCode;
 		switch (c) {
+            case 32: // Spacebar
+                that.space = true;
+                break;
 			// Controls
 			case 37: // Left
 				that.left = true;
@@ -31,6 +35,9 @@ var Keys = function(up, left, right, down) {
 		var that = this,
 			c = e.keyCode;
 		switch (c) {
+            case 32: // Spacebar
+                that.space = false;
+                break;
 			case 37: // Left
 				that.left = false;
 				break;
@@ -51,6 +58,7 @@ var Keys = function(up, left, right, down) {
 		left: left,
 		right: right,
 		down: down,
+        space: space,
 		onKeyDown: onKeyDown,
 		onKeyUp: onKeyUp
 	};

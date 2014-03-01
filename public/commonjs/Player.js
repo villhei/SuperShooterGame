@@ -1,23 +1,12 @@
-/**
- * Created by Ville on 27.2.2014.
- */
 
 (function (exports) {
 
    exports.Player = function (sessionId, startX, startY) {
-        var x = startX,
-            y = startY,
-            id = sessionId,
-            vel_x = 0,
-            vel_y = 0,
-            acceleration = 0.1,
-            turningspeed = 2,
+        var id = sessionId,
             name,
-            ping = 0;
-            radius = 20,
-            health = 100,
             score = 0,
-            angle = 0;
+            ping = 0,
+            ship = new Ship(startX, startY, sessionId);
 
 
        var getId = function() {
@@ -25,44 +14,20 @@
        }
 
         var getX = function () {
-            return x;
+            return ship.getX();
         };
 
         var getY = function () {
-            return y;
+            return ship.getY();
         };
 
         var setX = function (newX) {
-            x = newX;
+            x = ship.setX(newX);
         };
 
         var setY = function (newY) {
-            y = newY;
+            y = ship.setY(newY);
         };
-
-       var addVel_x = function(addition) {
-           vel_x += addition;
-       }
-
-       var addVel_y = function(addition) {
-           vel_y += addition;
-       }
-
-       var getVel_x = function () {
-           return vel_x;
-       };
-
-       var getVel_y = function () {
-           return vel_y;
-       };
-
-       var setVel_x = function (newX) {
-           vel_x = newX;
-       };
-
-       var setVel_y = function (newY) {
-           vel_y = newY;
-       };
 
         var setName = function (newName) {
             name = newName;
@@ -71,6 +36,10 @@
         var getName = function () {
             return name;
         };
+
+       var getScore = function() {
+           return score;
+       }
 
        var setPing = function(newPing) {
            ping = newPing;
@@ -81,18 +50,42 @@
        }
 
         var toString = function () {
-            return getName() + "[" + id + "] @ (" + x + "," + y + ")"
+            return getName() + "[" + id + "] @ (" + ship.getX() + "," + ship.getY() + ")"
         };
+
+       var setJSON = function(newValues) {
+           ship.setX(newValues.x);
+           ship.setY(newValues.y);
+           id = newValues.id;
+           name = newValues.name;
+           score = newValues.score;
+           ping = newValues.ping;
+           ship.health = newValues.ship.health;
+           ship.angle = newValues.ship.angle;
+           ship.alive = newValues.ship.alive;
+           ship.vel_x = newValues.ship.vel_x;
+           ship.vel_y = newValues.ship.vel_y;
+
+       }
 
        var toJSON = function () {
            return {
-               x: x,
-               y: y,
-               vel_x: vel_x,
-               vel_y: vel_y,
+               x: ship.getX(),
+               y: ship.getY(),
                id: id,
                name: name,
-               ping: ping
+               score: score,
+               ping: ping,
+               ship: {
+                   x: ship.getX(),
+                   y: ship.getY(),
+                   health: ship.health,
+                   alive: ship.alive,
+                   angle: ship.angle,
+                   vel_x: ship.vel_x,
+                   vel_y: ship.vel_y
+               }
+
            }
        }
 
@@ -102,20 +95,16 @@
             getY: getY,
             setX: setX,
             setY: setY,
-            getVel_x: getVel_x,
-            setVel_x: setVel_x,
-            getVel_y: getVel_y,
-            setVel_y: setVel_y,
-            addVel_x: addVel_x,
-            addVel_y: addVel_y,
             toString: toString,
             toJSON: toJSON,
+            setJSON: setJSON,
             getName: getName,
             setName: setName,
             getPing: getPing,
             setPing: setPing,
-            acceleration: acceleration,
-            id: id
+            ship: ship,
+            id: id,
+            score: score
         }
     };
 

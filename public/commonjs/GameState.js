@@ -8,6 +8,7 @@
 
         var players = [];
         var entities = [];
+        var projectiles = [];
         var drawables = [];
         var sizeX = 500;
         var sizeY= 500;
@@ -20,9 +21,7 @@
             for (i = 0; i < players.length; i++) {
                 if (players[i].id == id)
                     return players[i];
-            }
-            ;
-
+            };
             return false;
         };
 
@@ -30,6 +29,7 @@
             players: players,
             entities: entities,
             drawables: drawables,
+            projectiles: projectiles,
             ticks: ticks,
             playerById: playerById,
             sizeX: sizeX,

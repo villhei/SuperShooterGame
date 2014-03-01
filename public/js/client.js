@@ -6,11 +6,13 @@ var canvas,			// Canvas DOM element
     keys,			// Keyboard input
     gameState,      // The game state global
     localPlayer,	// Local player
-    socket,         // The socket
-    responseTime;   // Helper to measure ping time
+    socket;         // The socket
 
 var GameState = exports.GameState;
 var Player = exports.Player;
+var Ship = exports.Ship;
+var Vector = exports.Vector;
+var Projectile = exports.Projectile;
 
 var canvas_width = 800;
 var canvas_height = 600;
@@ -31,7 +33,7 @@ function init() {
     // Initialise keyboard controls
     keys = new Keys();
 
-    socket = io.connect("http://localhost", {port: 8000, transports: ["websocket"]});
+    socket = io.connect("http://tunkki.plop.fi", {port: 8888, transports: ["websocket"]});
 
     gameState = new GameState();
 
@@ -65,7 +67,7 @@ var setEventHandlers = function () {
     socket.on("clientUpdate", onClientUpdate);
     socket.on("update player", onUpdatePlayer);
     socket.on("remove player", onRemovePlayer);
-    socket.on("gamestate_update", onGameStateUpdate);
+    socket.on("state update", onGameStateUpdate);
 
     socket.on('ping', function () {
         socket.emit('pong');
@@ -148,13 +150,26 @@ function onRemovePlayer(data) {
 
 function onGameStateUpdate(data) {
     gameState.ticks.last_server = data.tick;
-    for (var i = 0; i < data.players.length; ++i) {
-        var playerInfo = data.players[i];
-        var player = gameState.playerById(playerInfo.id);
-        player.setX(playerInfo.x);
-        player.setY(playerInfo.y);
-        player.setName(playerInfo.name);
-        player.setPing(playerInfo.ping);
+    updatePlayers();
+    updateProjectiles();
+    function updateProjectiles() {
+        gameState.projectiles = [];
+        for (var i = 0; i < data.projectiles.length; ++i) {
+            var rp = data.projectiles[i];
+            var projectile = new Projectile(new Vector(rp.x, rp.y), new Vector(rp.vel_x, rp.vel_y))
+            gameState.projectiles.push(projectile);
+        }
+    }
+
+    function updatePlayers() {
+        for (var i = 0; i < data.players.length; ++i) {
+            var playerInfo = data.players[i];
+            var player = gameState.playerById(playerInfo.id);
+            if (player) {
+                player.setJSON(playerInfo);
+                console.log(playerInfo.score);
+            }
+        }
     }
 
 }
@@ -165,7 +180,6 @@ function onGameStateUpdate(data) {
  **************************************************/
 function animate() {
     draw();
-
     // Request a new animation frame using Paul Irish's shim
     window.requestAnimFrame(animate);
 };
@@ -181,44 +195,41 @@ function runGame() {
  **************************************************/
 function update() {
 
-    movePlayers();
-
-    function movePlayers() {
-        var movement;
-        if (localPlayer) {
-            if (movement = updateClientInput(keys)) {
-                movement.id = localPlayer.id;
-                console.log(movement);
-                socket.emit("move player", movement);
-            }
-        }
+    var payload;
+    if (localPlayer) {
+        payload = updateClientInput(keys);
+        socket.emit("update player", payload);
     }
+
 };
 
 function updateClientInput(keys) {
 
-    var accel_x = 0,
-        accel_y = 0;
-
-    var acceleration = localPlayer.acceleration;
+    var vertical_accel = 0,
+        horizontal_accel = 0,
+        firing = false;
 
     // Up key takes priority over down
     if (keys.up) {
-        accel_y -= acceleration;
+        horizontal_accel = 1;
     } else if (keys.down) {
-        accel_y += acceleration;
+        horizontal_accel = -1;
     }
-    ;
 
     // Left key takes priority over right
     if (keys.left) {
-        accel_x -= acceleration;
+        vertical_accel = -1;
     } else if (keys.right) {
-        accel_x += acceleration    }
-    ;
-    return accel_x == 0 && accel_y == 0 ? false : {
-        accel_x: accel_x,
-        accel_y: accel_y
+        vertical_accel = 1
+    }
+
+    if (keys.space) {
+        firing = true;
+    }
+    return {
+        accel_x: vertical_accel,
+        accel_y: horizontal_accel,
+        firing: firing
     }
 };
 
@@ -230,20 +241,37 @@ function draw() {
     // Wipe the canvas clean
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
+    function fillBackGround(ctx, color) {
+        ctx.fillStyle = color;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+    }
+
     /* Draw players */
+
+    fillBackGround(ctx, "#000");
 
     var i;
     for (i = 0; i < gameState.players.length; i++) {
-        drawPlayer(gameState.players[i]);
+        var player = gameState.players[i];
+        drawText(player.getName(), player.getX(), player.getY() + 2 * player.ship.size);
+
+        if (player.id === localPlayer.id) {
+            drawShip(ctx, player.ship, "#29C920");
+        } else {
+            drawShip(ctx, player.ship, "#33A0D6");
+        }
+
     }
-    ;
+    for (i = 0; i < gameState.projectiles.length; i++) {
+        drawProjectile(ctx, gameState.projectiles[i]);
+    }
 
     drawDebugData();
 
     function drawText(text, x, y, color) {
         var fontSize = 12;
         var fontStyle = 'Arial';
-        var fontColor = color || '#000';
+        var fontColor = color || '#fff';
 
         ctx.font = fontSize + 'px ' + fontStyle;
         ctx.fillStyle = fontColor;
@@ -251,12 +279,40 @@ function draw() {
         ctx.fillText(text, x, y);
     }
 
-    function drawPlayer(player) {
-        var fillStyle = player.id === localPlayer.id ? '#f00' : '#000';
-        ctx.fillStyle = fillStyle;
-        ctx.fillRect(player.getX() - 5, player.getY() - 5, 10, 10);
-        drawText(player.getName(), player.getX(), player.getY())
-    };
+    function drawShip(ctx, ship, shipColor) {
+        var left = ship.getLeft();
+        var right = ship.getRight();
+        var head = ship.getHead();
+        var position = ship.getPosition();
+        var color = ship.alive ? shipColor : "#748599";
+
+        ctx.strokeStyle = '#E9F2F7';
+        ctx.beginPath();
+        ctx.moveTo(head.x, head.y);
+        ctx.lineTo(left.x, left.y);
+        ctx.lineTo(position.x, position.y);
+        ctx.lineTo(right.x, right.y);
+        ctx.lineTo(head.x, head.y);
+        ctx.lineWidth = 1;
+        ctx.stroke();
+        ctx.closePath();
+        ctx.fillStyle = color;
+        ctx.fill();
+    }
+
+
+    function drawProjectile(ctx, projectile) {
+        var position = projectile.position;
+        var projectile_size = 2;
+        var projectile_color = '#fff'
+        var oldStyle = ctx.fillStyle;
+        ctx.beginPath();
+        ctx.arc(position.x, position.y, projectile_size, 0, 2 * Math.PI, false);
+        ctx.fillStyle = projectile_color;
+        ctx.closePath();
+        ctx.fill();
+        ctx.fillStyle = oldStyle;
+    }
 
     function drawDebugData() {
         var boxwidth = 200;
@@ -267,14 +323,16 @@ function draw() {
 
         var padding = 5;
 
-        ctx.fillStyle = 'rgba(0, 0, 0, 0.2)'
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.2)'
         ctx.fillRect(box_x, box_y, boxwidth, boxheight);
 
         var text = 'Game tick: ' + gameState.ticks.last_server;
-        drawText(text, box_x + padding, box_y + 15)
+        drawText(text, box_x + padding, box_y + 15);
         var text2 = 'Ping: ' + localPlayer.getPing() + " ms";
-        drawText(text2, box_x + padding, box_y + 30)
+        drawText(text2, box_x + padding, box_y + 30);
+        var text3 = 'Score: ' + localPlayer.score + " points";
 
+        drawText(text3, box_x + padding, box_y + 45);
 
     }
 
