@@ -12,6 +12,7 @@ var socket,
     updateQueue,
     config;
 
+var GAME = {};
 
 var tickCount = 0;
 function init() {
@@ -21,9 +22,15 @@ function init() {
             console.log('Could not load config file.');
             return;
         }
-        console.log('sizeX, sizeY: ' + config.sizeX + ',' + config.sizeY);
+        GAME.area = {
+            sizeX: config.sizeX || 800,
+            sizeY: config.sizeY || 600
+        }
+
     });
     gameState = new GameState();
+
+
     gameTickCount = 0;
     connect.createServer(
         connect.static(__dirname + "/public")
@@ -38,10 +45,10 @@ function init() {
 
     setEventHandlers();
 
-    var gameTicks = setInterval(function() {
+    var gameTicks = setInterval(function () {
         gameTickCount++;
         updateClientStates();
-    }, 1000/30);
+    }, 1000 / 30);
 
 };
 
@@ -51,10 +58,25 @@ var setEventHandlers = function () {
 
 function onSocketConnection(clientSocket) {
     util.log("New player has connected: " + clientSocket.id);
+    var startTime = 0;
 
     clientSocket.on("disconnect", onClientDisconnect);
     clientSocket.on("new player", onNewPlayer);
     clientSocket.on("move player", onMovePlayer);
+    clientSocket.on("change name", onChangePlayerName);
+    clientSocket.on('pong', function () {
+        var player = gameState.playerById(clientSocket.id);
+
+        var latency = Date.now() - startTime;
+        player.setPing(latency);
+        util.log("Ping for " + clientSocket.id + ": " + latency + "ms");
+    });
+
+
+    var ping = setInterval(function () {
+        startTime = Date.now();
+        clientSocket.emit('ping');
+    }, 1000);
 };
 
 function onClientDisconnect() {
@@ -79,10 +101,8 @@ function onMovePlayer(movementData) {
         return;
     }
     ;
-
-    targetPlayer.move(movementData.x, movementData.y);
-
-    var response = targetPlayer.toJSON();
+    targetPlayer.addVel_x(movementData.accel_x);
+    targetPlayer.addVel_y(movementData.accel_y);
 
 };
 
@@ -116,14 +136,52 @@ function onNewPlayer(data) {
     gameState.players.push(newPlayer);
 };
 
-function updateClientStates() {
+function onChangePlayerName(data) {
+    util.log(this.id + " renamed to " + data.name);
+    var player = gameState.playerById(this.id);
+    player.setName(data.name);
 
+}
+
+function updateClientStates() {
+    runGameCycle();
     var payload = packGameData();
 
     var clients = socket.sockets.clients(); // This returns an array with all connected clients
 
-    for ( i = 0; i < clients.length; i++ ) {
+    for (i = 0; i < clients.length; i++) {
         clients[i].emit('gamestate_update', payload);
+    }
+}
+
+function runGameCycle() {
+    function movePlayers() {
+        for (var i = 0; i < gameState.players.length; ++i) {
+            var player = gameState.players[i];
+            moveEntity(player);
+        }
+    }
+
+    movePlayers();
+}
+
+function moveEntity(movableEntity) {
+
+    var me = movableEntity;
+    me.setX(me.getX() + me.getVel_x());
+    me.setY(me.getY() + me.getVel_y());
+
+    if (me.getX() < 0) {
+        me.setX(GAME.area.sizeX);
+    }
+    if (me.getX() > GAME.area.sizeX) {
+        me.setX(0);
+    }
+    if (me.getY() < 0) {
+        me.setY(GAME.area.sizeY);
+    }
+    if (me.getY() > GAME.area.sizeY) {
+        me.setY(0);
     }
 }
 

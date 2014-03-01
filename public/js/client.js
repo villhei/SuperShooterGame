@@ -6,10 +6,14 @@ var canvas,			// Canvas DOM element
     keys,			// Keyboard input
     gameState,      // The game state global
     localPlayer,	// Local player
-    socket;         // The socket
+    socket,         // The socket
+    responseTime;   // Helper to measure ping time
 
 var GameState = exports.GameState;
 var Player = exports.Player;
+
+var canvas_width = 800;
+var canvas_height = 600;
 
 /**************************************************
  ** GAME INITIALISATION
@@ -20,8 +24,8 @@ function init() {
     ctx = canvas.getContext("2d");
 
     // Maximise the canvas
-    canvas.width = 800;
-    canvas.height = 600;
+    canvas.width = canvas_width;
+    canvas.height = canvas_height;
 
     localPlayer = new Player();
     // Initialise keyboard controls
@@ -39,8 +43,8 @@ function init() {
 
 function setName() {
     var name = document.getElementById('playerName').value;
-    console.log(name);
-    localPlayer.setName(name);
+    socket.emit("change name", {name: name});
+
 }
 
 
@@ -62,6 +66,10 @@ var setEventHandlers = function () {
     socket.on("update player", onUpdatePlayer);
     socket.on("remove player", onRemovePlayer);
     socket.on("gamestate_update", onGameStateUpdate);
+
+    socket.on('ping', function () {
+        socket.emit('pong');
+    });
 };
 
 // Keyboard key down
@@ -95,6 +103,7 @@ function onSocketConnected() {
 function onSocketDisconnect() {
     console.log("Disconnected from socket server");
 };
+
 
 function onClientUpdate(data) {
     localPlayer.setX(data.x);
@@ -144,10 +153,8 @@ function onGameStateUpdate(data) {
         var player = gameState.playerById(playerInfo.id);
         player.setX(playerInfo.x);
         player.setY(playerInfo.y);
-
-        if (playerInfo.name != player.getName()) {
-            player.setName(playerInfo.name);
-        }
+        player.setName(playerInfo.name);
+        player.setPing(playerInfo.ping);
     }
 
 }
@@ -174,40 +181,44 @@ function runGame() {
  **************************************************/
 function update() {
 
-    var movement;
-    if (localPlayer) {
-        if (movement = updateClientInput(keys)) {
-            movement.id = localPlayer.id;
-            socket.emit("move player", movement);
+    movePlayers();
+
+    function movePlayers() {
+        var movement;
+        if (localPlayer) {
+            if (movement = updateClientInput(keys)) {
+                movement.id = localPlayer.id;
+                console.log(movement);
+                socket.emit("move player", movement);
+            }
         }
     }
 };
 
 function updateClientInput(keys) {
 
-    var deltaX = 0,
-        deltaY = 0;
+    var accel_x = 0,
+        accel_y = 0;
 
-    var moveAmount = localPlayer.moveAmount;
+    var acceleration = localPlayer.acceleration;
 
     // Up key takes priority over down
     if (keys.up) {
-        deltaY -= moveAmount;
+        accel_y -= acceleration;
     } else if (keys.down) {
-        deltaY += moveAmount;
+        accel_y += acceleration;
     }
     ;
 
     // Left key takes priority over right
     if (keys.left) {
-        deltaX -= moveAmount;
+        accel_x -= acceleration;
     } else if (keys.right) {
-        deltaX += moveAmount;
-    }
+        accel_x += acceleration    }
     ;
-    return deltaX == 0 && deltaY == 0 ? false : {
-        x: deltaX,
-        y: deltaY
+    return accel_x == 0 && accel_y == 0 ? false : {
+        accel_x: accel_x,
+        accel_y: accel_y
     }
 };
 
@@ -256,12 +267,13 @@ function draw() {
 
         var padding = 5;
 
-        var text = 'Game tick: ' + gameState.ticks.last_server;
-
         ctx.fillStyle = 'rgba(0, 0, 0, 0.2)'
         ctx.fillRect(box_x, box_y, boxwidth, boxheight);
 
+        var text = 'Game tick: ' + gameState.ticks.last_server;
         drawText(text, box_x + padding, box_y + 15)
+        var text2 = 'Ping: ' + localPlayer.getPing() + " ms";
+        drawText(text2, box_x + padding, box_y + 30)
 
 
     }

@@ -9,6 +9,8 @@
         var players = [];
         var entities = [];
         var drawables = [];
+        var sizeX = 500;
+        var sizeY= 500;
         var ticks = {
             last_server: 0
         }
@@ -29,7 +31,9 @@
             entities: entities,
             drawables: drawables,
             ticks: ticks,
-            playerById: playerById
+            playerById: playerById,
+            sizeX: sizeX,
+            sizeY: sizeY
         }
 
     }
