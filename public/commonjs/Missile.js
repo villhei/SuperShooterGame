@@ -3,32 +3,31 @@
  */
 (function (exports) {
 
-    exports.Projectile = Projectile;
+    exports.Projectile = Missile;
 
-    function Projectile(position, velocity, range, projectileVelocity) {
+    function Missile(position, velocity) {
         this.position = position;
         this.velocity = velocity;
         this.lifetime = range || 250;
-        this.projectileVelocity = projectileVelocity || 10;
         this.alive = true;
-        this.damage = 7;
+        this.damage = 40;
         this.id = "";
         this.size = 2;
     };
 
-    Projectile.prototype.getPosition = function() {
+    Missile.prototype.getPosition = function() {
         return this.position;
     }
 
-    Projectile.prototype.setX = function(newValue) {
+    Missile.prototype.setX = function(newValue) {
         this.position.x = newValue;
     }
 
-    Projectile.prototype.setY = function(newValue) {
+    Missile.prototype.setY = function(newValue) {
         this.position.y = newValue;
     }
 
-    Projectile.prototype.move = function () {
+    Missile.prototype.move = function () {
         this.position = this.position.add(this.velocity);
         this.lifetime -= this.projectileVelocity;
         if(this.lifetime < 0) {
@@ -37,7 +36,7 @@
 
     };
 
-    Projectile.prototype.toJSON = function() {
+    Missile.prototype.toJSON = function() {
         return {
             x: this.position.x,
             y: this.position.y,
@@ -46,4 +45,4 @@
         }
     }
 
-})(typeof exports === 'undefined' ? this['Projectile'] = {} : exports);
+})(typeof exports === 'undefined' ? this['Missile'] = {} : exports);

@@ -2,7 +2,7 @@
     "name": "SuperShooterGame",
     "version": "0.0.0",
     "description": "",
-    "main": "game.js",
+    "main": "server.js",
     "dependencies": {
         "connect": "~2.13.0",
         "socket.io": "~0.9.16"

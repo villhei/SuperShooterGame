@@ -62,6 +62,8 @@
         this.ship.alive = newValues.ship.alive;
         this.ship.vel_x = newValues.ship.vel_x;
         this.ship.vel_y = newValues.ship.vel_y;
+        this.ship.accelerating = newValues.ship.accelerating;
+        this.ship.afterburner = newValues.ship.afterburner;
 
     }
 
@@ -79,6 +81,8 @@
                 health: this.ship.health,
                 alive: this.ship.alive,
                 angle: this.ship.angle,
+                accelerating: this.ship.accelerating,
+                afterburner: this.ship.afterburner,
                 vel_x: this.ship.vel_x,
                 vel_y: this.ship.vel_y
             }

@@ -15,10 +15,15 @@ var Vector = exports.Vector;
 var Projectile = exports.Projectile;
 
 var canvas_width = 800;
-var canvas_height = 600;
+var canvas_height = 800;
+
+
+var CLIENT = {
+    state: {}
+}
 
 /**************************************************
- ** GAME INITIALISATION
+ ** Game INITIALISATION
  **************************************************/
 function init() {
     // Declare the canvas and rendering context
@@ -51,7 +56,7 @@ function setName() {
 
 
 /**************************************************
- ** GAME EVENT HANDLERS
+ ** Game EVENT HANDLERS
  **************************************************/
 var setEventHandlers = function () {
     // Keyboard
@@ -59,7 +64,7 @@ var setEventHandlers = function () {
     window.addEventListener("keyup", onKeyup, false);
 
     // Window resize
-    //  window.addEventListener("resize", onResize, false);
+    window.addEventListener("resize", onResize, false);
 
     socket.on("connect", onSocketConnected);
     socket.on("disconnect", onSocketDisconnect);
@@ -92,8 +97,8 @@ function onKeyup(e) {
 // Browser window resize
 function onResize(e) {
     // Maximise the canvas
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
+    canvas.width = canvas_width;
+    canvas.height = canvas_height;
 };
 
 function onSocketConnected() {
@@ -128,9 +133,9 @@ function onRemovePlayer(data) {
     if (!removePlayer) {
         console.log("Player not found: " + data.id);
         return;
-    }
-    ;
-
+    };
+    console.log("removing: " + data.id);
+    console.log(removePlayer);
     gameState.players.splice(gameState.players.indexOf(removePlayer), 1);
 
 };
@@ -162,7 +167,7 @@ function onGameStateUpdate(data) {
 
 
 /**************************************************
- ** GAME ANIMATION LOOP
+ ** Game ANIMATION LOOP
  **************************************************/
 function animate() {
     draw();
@@ -177,7 +182,7 @@ function runGame() {
 
 
 /**************************************************
- ** GAME UPDATE
+ ** Game UPDATE
  **************************************************/
 function update() {
 
@@ -193,7 +198,9 @@ function updateClientInput(keys) {
 
     var vertical_accel = 0,
         horizontal_accel = 0,
-        firing = false;
+        firing = false,
+        firing_secondary = false,
+        afterburner = false;
 
     // Up key takes priority over down
     if (keys.up) {
@@ -209,21 +216,38 @@ function updateClientInput(keys) {
         vertical_accel = 1
     }
 
+    // Others
+
+    if(keys.ctrl) {
+        firing_secondary= true;
+    }
+
+    if(keys.shift) {
+        afterburner = true;
+    }
+
     if (keys.space) {
         firing = true;
     }
     return {
         accel_x: vertical_accel,
         accel_y: horizontal_accel,
-        firing: firing
+        firing: firing,
+        firing_secondary: firing_secondary,
+        afterburner: afterburner
     }
 };
 
 
 /**************************************************
- ** GAME DRAW
+ ** Game DRAW
  **************************************************/
 function draw() {
+
+    var object_border_color = '#E9F2F7'
+    var thrust_color = 'rgba(3, 196, 255, 0.2)';
+    var afterburner_color = 'rgba(187, 242, 250, 0.2)';
+
     // Wipe the canvas clean
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
@@ -239,14 +263,7 @@ function draw() {
     var i;
     for (i = 0; i < gameState.players.length; i++) {
         var player = gameState.players[i];
-        drawText(player.getName(), player.ship.getX(), player.ship.getY() + 2 * player.ship.size);
-
-        if (player.id === localPlayer.id) {
-            drawShip(ctx, player.ship, "#29C920");
-        } else {
-            drawShip(ctx, player.ship, "#33A0D6");
-        }
-
+        drawPlayer(ctx, player);
     }
     for (i = 0; i < gameState.projectiles.length; i++) {
         drawProjectile(ctx, gameState.projectiles[i]);
@@ -254,7 +271,62 @@ function draw() {
 
     drawDebugData();
 
-    function drawText(text, x, y, color) {
+    function drawPlayer(ctx, player) {
+        if (player.id === localPlayer.id) {
+            drawShip(ctx, player.ship, "#29C920");
+        } else {
+            drawShip(ctx, player.ship, "#33A0D6");
+        }
+        if(player.ship.alive) {
+            drawShipThrust(ctx, player.ship);
+            drawHealthBox(ctx, player.ship);
+        }
+        drawText(ctx, player.getName(), player.ship.getX()-player.ship.size, player.ship.getY() + 2.5 * player.ship.size);
+    }
+
+    function drawHealthBox(ctx, ship) {
+        var boxwidth = 25;
+        var boxheight = 6;
+
+        var box_x = ship.getX() - ship.size*0.5;
+        var box_y = ship.getY() + ship.size*1.2;
+        ctx.strokeStyle = object_border_color;
+        ctx.strokeWeight = 1;
+        ctx.fillStyle = 'rgb(0, 0, 0)'
+        ctx.strokeRect(box_x, box_y, boxwidth, boxheight);
+        ctx.fillStyle = '#F6FF00'
+        ctx.fillRect(box_x+1, box_y+2, (boxwidth-2)*(ship.health/100), boxheight-4);
+    }
+
+    function drawShipThrust(ctx, ship) {
+        if(ship.accelerating) {
+            var position = ship.getThrustPosition();
+            if(ship.afterburner) {
+                var velocity = ship.getVelocity();
+                var blob = new Vector(position.x - velocity.x, position.y - velocity.y);
+                blob.color = afterburner_color;
+            } else {
+                var blob = new Vector(position.x, position.y);
+                blob.color = thrust_color;
+            }
+            blob.lifeTime = 20;
+            ship.thrust.push(blob);
+        }
+        var arc_size = 5;
+        ship.thrust = ship.thrust.filter(function(element) { return element.lifeTime > 0});
+        var multiplier = 0.2;
+        ship.thrust.forEach(function(thrust) {
+            thrust.lifeTime--;
+            ctx.beginPath();
+            ctx.arc(thrust.x, thrust.y, arc_size*multiplier, 2 * Math.PI, false);
+            ctx.closePath();
+            ctx.fillStyle = thrust.color;
+            ctx.fill();
+            multiplier *= 1.1
+        })
+    }
+
+    function drawText(ctx, text, x, y, color) {
         var fontSize = 12;
         var fontStyle = 'Arial';
         var fontColor = color || '#fff';
@@ -271,8 +343,7 @@ function draw() {
         var head = ship.getHead();
         var position = ship.getPosition();
         var color = ship.alive ? shipColor : "#748599";
-
-        ctx.strokeStyle = '#E9F2F7';
+        ctx.strokeStyle = object_border_color;
         ctx.beginPath();
         ctx.moveTo(head.x, head.y);
         ctx.lineTo(left.x, left.y);
@@ -284,6 +355,19 @@ function draw() {
         ctx.closePath();
         ctx.fillStyle = color;
         ctx.fill();
+
+        function drawGlare(){
+            var color = 'rgba(0,0,0,0.2)'
+            ctx.beginPath();
+            ctx.moveTo(head.x, head.y);
+            ctx.lineTo(left.x, left.y);
+            ctx.lineTo(position.x, position.y);
+            ctx.lineTo(head.x, head.y);
+            ctx.closePath();
+            ctx.fillStyle = color;
+            ctx.fill();
+        }
+        drawGlare();
     }
 
 
@@ -304,7 +388,7 @@ function draw() {
         var boxwidth = 200;
         var boxheight = 50;
 
-        var box_x = 300;
+        var box_x = (canvas.width-boxwidth)/2;
         var box_y = 0;
 
         var padding = 5;
@@ -313,12 +397,12 @@ function draw() {
         ctx.fillRect(box_x, box_y, boxwidth, boxheight);
 
         var text = 'Game tick: ' + gameState.ticks.last_server;
-        drawText(text, box_x + padding, box_y + 15);
+        drawText(ctx, text, box_x + padding, box_y + 15);
         var text2 = 'Ping: ' + localPlayer.getPing() + " ms";
-        drawText(text2, box_x + padding, box_y + 30);
+        drawText(ctx, text2, box_x + padding, box_y + 30);
         var text3 = 'Score: ' + localPlayer.score;
 
-        drawText(text3, box_x + padding, box_y + 45);
+        drawText(ctx, text3, box_x + padding, box_y + 45);
     }
 
 };
