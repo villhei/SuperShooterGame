@@ -39,6 +39,13 @@
         this.ping = newPing;
     }
 
+    /**
+     *  FIXME
+     */
+    Player.prototype.getPosition = function() {
+        return this.ship.getPosition();
+    }
+
 
     Player.prototype.getPing = function () {
         return this.ping;

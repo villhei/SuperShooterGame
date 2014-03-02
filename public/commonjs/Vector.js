@@ -26,6 +26,10 @@
         return new Vector(this.x * value, this.y * value);
     };
 
+    Vector.prototype.cross2D = function (vector) {
+        return this.x*vector.y - this.y*vector.x;
+    }
+
     Vector.prototype.length = function () {
         return Math.sqrt(this.x * this.x + this.y * this.y);
     };

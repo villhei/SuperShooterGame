@@ -11,8 +11,13 @@
         }
 
         this.cannon = {
-            velocity: 15
+            bulletVelocity: 15
         };
+
+        this.missile = {
+            missileVelocity: 10,
+            fireDelay: 500
+        }
         this.max_speed = 15;
         this.respawnTime = 1000;
         this.tickCount = 0;
@@ -23,7 +28,6 @@
 
     Game.prototype.removePlayer = function(playerId) {
         var removePlayer = this.state.playerById(playerId);
-        console.log(removePlayer);
         if (removePlayer === undefined) {
             return false;
         } ;
@@ -76,23 +80,38 @@
 
     Game.prototype.runGameCycle = function () {
 
-        this.updateProjectiles();
+        this.updateBallistics();
         this.updatePlayers();
     }
 
-    Game.prototype.updateProjectiles = function () {
-        var activeProjectiles = this.state.projectiles.filter(function (element) {
+    Game.prototype.updateBallistics = function() {
+        this.state.projectiles = this.updateWeapon(this.state.projectiles);
+        this.state.missiles = this.updateWeapon(this.state.missiles);
+        this.applyTracking(this.state.missiles);
+    }
+
+
+    Game.prototype.applyTracking = function(trackingWeapons) {
+        var game = this;
+        trackingWeapons.forEach(function(trackingWeapon) {
+            trackingWeapon.track(game.state.players);
+        });
+    }
+
+
+    Game.prototype.updateWeapon = function (weaponType) {
+        var livingProjectiles = weaponType.filter(function (element) {
             return element.alive;
         });
-        for (var i = 0; i < activeProjectiles.length; ++i) {
-            var projectile = activeProjectiles[i];
+        for (var i = 0; i < livingProjectiles.length; ++i) {
+            var projectile = livingProjectiles[i];
             if (projectile.alive) {
                 projectile.move();
                 this.checkAreaBounds(projectile);
-                this.checkProjectileCollision(projectile)
+                this.checkWeaponHits(projectile)
             }
         }
-        this.state.projectiles = activeProjectiles;
+        return livingProjectiles;
     }
 
     Game.prototype.updatePlayers = function () {
@@ -105,6 +124,9 @@
                 if (player.ship.firing_primary) {
                     this.fireProjectile(player.ship);
                 }
+                if (player.ship.firing_secondary) {
+                    this.fireMissile(player.ship);
+                }
             } else {
                 var timeNow = new Date().getTime();
 
@@ -116,8 +138,9 @@
         }
     }
 
-    Game.prototype.checkProjectileCollision = function (projectile) {
+    Game.prototype.checkWeaponHits = function (projectile) {
         var game = this;
+
         game.state.players.forEach(function (player) {
             if (projectile.position.distance(player.ship.getPosition()) <= player.ship.size) {
                 if (player.id != projectile.id && player.ship.alive) {
@@ -125,7 +148,6 @@
                     if (player.ship.health < 0) {
                         player.ship.alive = false;
                         player.ship.deathTime = new Date().getTime();
-                        util.log("projectileid: " + projectile.id);
                         var killer = game.state.playerById(projectile.id);
                         if (killer) {
                             util.log(killer + " killed " + player.getName() + ", new score: " + killer.score);
@@ -141,13 +163,31 @@
     Game.prototype.fireProjectile = function (weaponizedEntity) { // Such as ship
         var we = weaponizedEntity;
 
-        var projectileVelocity = this.cannon.velocity;
-        var vel_x = we.vel_x + (Math.cos(we.angle * Math.PI / 180) * projectileVelocity);
-        var vel_y = we.vel_y + (Math.sin(we.angle * Math.PI / 180) * projectileVelocity);
+        var projectileVelocity = this.cannon.bulletVelocity;
+        var launch_vel_x = we.vel_x + (Math.cos(we.angle * Math.PI / 180) * projectileVelocity);
+        var launch_vel_y = we.vel_y + (Math.sin(we.angle * Math.PI / 180) * projectileVelocity);
 
-        var projectile = new Projectile(weaponizedEntity.getWeaponPosition(), new Vector(vel_x, vel_y), this.range, projectileVelocity);
+        var projectile = new Projectile(weaponizedEntity.getWeaponPosition(), new Vector(launch_vel_x, launch_vel_y));
         projectile.id = we.id;
         this.state.projectiles.push(projectile);
+    }
+
+    Game.prototype.fireMissile = function (weaponizedEntity) { // Such as ship
+        var we = weaponizedEntity;
+        var timeNow = new Date().getTime()
+
+        if(timeNow - we.lastMissileFire < this.missile.fireDelay) {
+            return;
+        } else
+
+        we.lastMissileFire = new Date().getTime();
+        var missileVelocity = this.missile.missileVelocity;
+        var launch_vel_x = we.vel_x + (Math.cos(we.angle * Math.PI / 180) * missileVelocity);
+        var launch_vel_y = we.vel_y + (Math.sin(we.angle * Math.PI / 180) * missileVelocity);
+
+        var missile = new Missile(weaponizedEntity.getWeaponPosition(), new Vector(launch_vel_x, launch_vel_y), we.angle);
+        missile.id = we.id;
+        this.state.missiles.push(missile);
     }
 
 
@@ -183,6 +223,7 @@
     Game.prototype.packGameData = function () {
         var players = [];
         var projectiles = [];
+        var missiles = [];
         var scores = [];
 
         var i;
@@ -197,10 +238,14 @@
         for (i = 0; i < this.state.projectiles.length; ++i) {
             projectiles.push(this.state.projectiles[i].toJSON());
         }
+        this.state.missiles.forEach(function(missile) {
+            missiles.push(missile.toJSON());
+        })
         return {
             tick: this.tickCount,
             players: players,
             scores: scores,
+            missiles: missiles,
             projectiles: projectiles
         }
     }

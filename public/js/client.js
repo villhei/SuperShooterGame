@@ -13,6 +13,8 @@ var Player = exports.Player;
 var Ship = exports.Ship;
 var Vector = exports.Vector;
 var Projectile = exports.Projectile;
+var Missile = exports.Missile;
+
 
 var canvas_width = 800;
 var canvas_height = 800;
@@ -38,7 +40,7 @@ function init() {
     // Initialise keyboard controls
     keys = new Keys();
 
-    socket = io.connect("http://tunkki.plop.fi", {port: 8888, transports: ["websocket"]});
+    socket = io.connect("http://ssg.plop.fi", {port: 8888, transports: ["websocket"]});
 
     gameState = new GameState();
 
@@ -144,6 +146,8 @@ function onGameStateUpdate(data) {
     gameState.ticks.last_server = data.tick;
     updatePlayers();
     updateProjectiles();
+    updateMissiles();
+
     function updateProjectiles() {
         gameState.projectiles = [];
         for (var i = 0; i < data.projectiles.length; ++i) {
@@ -151,6 +155,14 @@ function onGameStateUpdate(data) {
             var projectile = new Projectile(new Vector(rp.x, rp.y), new Vector(rp.vel_x, rp.vel_y))
             gameState.projectiles.push(projectile);
         }
+    }
+    function updateMissiles() {
+        gameState.missiles = [];
+
+        data.missiles.forEach(function(missile) {
+            var newMissile = new Missile(new Vector(missile.x, missile.y), new Vector(missile.vel_x, missile.vel_y), missile.angle);
+            gameState.missiles.push(newMissile);
+        })
     }
 
     function updatePlayers() {
@@ -265,9 +277,13 @@ function draw() {
         var player = gameState.players[i];
         drawPlayer(ctx, player);
     }
-    for (i = 0; i < gameState.projectiles.length; i++) {
-        drawProjectile(ctx, gameState.projectiles[i]);
-    }
+
+    gameState.projectiles.forEach(function(projectile) {
+        drawProjectile(ctx, projectile);
+    })
+    gameState.missiles.forEach(function(missile) {
+        drawMissile(ctx, missile);
+    })
 
     drawDebugData();
 
@@ -382,6 +398,22 @@ function draw() {
         ctx.closePath();
         ctx.fill();
         ctx.fillStyle = oldStyle;
+    }
+
+    function drawMissile(ctx, missile) {
+        console.log(missile);
+        var color = '#fff'
+        var left = missile.getLeft();
+        var right = missile.getRight();
+        var head = missile.getHead();
+        ctx.beginPath();
+        ctx.moveTo(head.x, head.y);
+        ctx.lineTo(left.x, left.y);
+        ctx.lineTo(right.x, right.y);
+        ctx.lineTo(head.x, head.y);
+        ctx.closePath();
+        ctx.fillStyle = color;
+        ctx.fill();
     }
 
     function drawDebugData() {

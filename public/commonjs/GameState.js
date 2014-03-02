@@ -9,6 +9,7 @@
         var players = [];
         var entities = [];
         var projectiles = [];
+        var missiles = [];
         var drawables = [];
         var sizeX = 500;
         var sizeY= 500;
@@ -29,6 +30,7 @@
             players: players,
             entities: entities,
             drawables: drawables,
+            missiles: missiles,
             projectiles: projectiles,
             ticks: ticks,
             playerById: playerById,

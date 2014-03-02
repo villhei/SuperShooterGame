@@ -18,7 +18,7 @@ var Keys = function (up, left, right, down, space, enter, shift, ctrl) {
             case 16: // Shift
                 that.shift = true;
                 break;
-            case 16: // Shift
+            case 17: // Shift
                 that.ctrl = true;
                 break;
             case 32: // Spacebar
@@ -48,7 +48,7 @@ var Keys = function (up, left, right, down, space, enter, shift, ctrl) {
             case 16: // Shift
                 that.shift = false;
                 break;
-            case 16: // Shift
+            case 17: // Shift
                 that.ctrl = false;
                 break;
             case 32: // Spacebar

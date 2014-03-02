@@ -22,6 +22,7 @@
         this.accelerating = false;
         this.regenerationSpeed = 0.5;
         this.thrust = [];
+        this.lastMissileFire = false;
     };
 
     Ship.prototype.angleTo = function (asteroid) {

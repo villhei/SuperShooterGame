@@ -5,6 +5,10 @@
     "updatesPerSecond": 30,
     "max_velocity": 30,
     "cannon" : {
-        "velocity" : 15
+        "bulletVelocity" : 15
+    },
+    "missile" : {
+        "missileVelocity" : 25,
+        "fireDelay": 1500
     }
 }

@@ -10,6 +10,7 @@ Vector = require("./public/commonjs/Vector").Vector;
 Game = require("./public/commonjs/Game").Game;
 GameState = require('./public/commonjs/GameState').GameState;
 Projectile = require('./public/commonjs/Projectile').Projectile;
+Missile = require('./public/commonjs/Missile').Missile;
 
 var LOG_PING = false;
 
@@ -38,9 +39,12 @@ function init() {
             sizeX: config.sizeX || 800,
             sizeY: config.sizeY || 600
         }
-        Game.cannon = {
-            velocity: config.cannon.velocity
+        GAME.cannon = {
+            bulletVelocity: config.cannon.bulletVelocity
         }
+        GAME.missile.missileVelocity = config.missile.missileVelocity;
+        GAME.missile.fireDelay = config.missile.fireDelay;
+
         GAME.respawnTime = config.respawnTime || 1000;
         GAME.updatesPerSecond = config.updatesPerSecond;
         GAME.max_speed = config.max_speed;
@@ -105,7 +109,7 @@ function onSocketConnection(clientSocket) {
 function onClientDisconnect() {
     util.log("Player has disconnected: " + this.id);
 
-    if(!GAME.removePlayer(this.id)) {
+    if (!GAME.removePlayer(this.id)) {
         util.log("Player not found for removal: " + this.id);
         return;
     }
@@ -113,8 +117,7 @@ function onClientDisconnect() {
 };
 
 function onUpdatePlayer(movementData) {
-
-    if(!GAME.updatePlayerInput(this.id, movementData)) {
+    if (!GAME.updatePlayerInput(this.id, movementData)) {
         util.log("Player not found for input update: " + this.id);
         return;
     }

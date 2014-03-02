@@ -5,11 +5,10 @@
 
     exports.Projectile = Projectile;
 
-    function Projectile(position, velocity, range, projectileVelocity) {
+    function Projectile(position, launchVelocity) {
         this.position = position;
-        this.velocity = velocity;
-        this.lifetime = range || 250;
-        this.projectileVelocity = projectileVelocity || 10;
+        this.velocity = launchVelocity;
+        this.lifetime = 15;
         this.alive = true;
         this.damage = 7;
         this.id = "";
@@ -30,7 +29,7 @@
 
     Projectile.prototype.move = function () {
         this.position = this.position.add(this.velocity);
-        this.lifetime -= this.projectileVelocity;
+        this.lifetime--;
         if(this.lifetime < 0) {
             this.alive = false;
         }
