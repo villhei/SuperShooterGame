@@ -45,6 +45,9 @@
     Player.prototype.getPosition = function() {
         return this.ship.getPosition();
     }
+    Player.prototype.getVelocity = function() {
+        return this.ship.getVelocity();
+    }
 
 
     Player.prototype.getPing = function () {

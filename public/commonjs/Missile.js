@@ -11,8 +11,9 @@
         this.velocity = velocity;
         this.lifetime = 15;
         this.angle = angle;
-        this.accelspeed = 0.2;
-        this.turningspeed = 4;
+        this.accelspeed = 0.3;
+        this.turningspeed = 10;
+        this.trackTarget = null;
         this.alive = true;
         this.damage = 50;
         this.id = "";
@@ -31,36 +32,43 @@
         this.position.y = newValue;
     }
 
-    Missile.prototype.track = function (targets) {
-        var shortest = 0;
-        var newTarget;
+    Missile.prototype.setTrackTraget = function(targets) {
         var missile = this;
+        var shortest = 0;
+        var newTarget = null;
         targets.forEach(function closestTarget(target) {
-            if(target.id == missile.id) {
+            if(target.id == missile.id ) {
                 return;
             }
             if(shortest == 0) {
                 shortest = missile.getPosition().distance(target.getPosition());
                 newTarget = target;
             } else {
-                if(newValue = missile.getPosition().distance(target.getPosition()) < shortest) {
+                var newValue = missile.getPosition().distance(target.getPosition());
+                if(newValue < shortest) {
                     shortest = newValue;
-                    shortest = target;
+                    newTarget = target;
                 }
             }
         });
-        if(newTarget === undefined) {
+        if(newTarget === null) {
             return;
         }
-        var r = newTarget.getPosition();
-        var p = missile.getPosition();
-        var q = missile.getPosition().add(missile.velocity);
+        this.trackTarget = newTarget;
+        console.log("target: " + newTarget.name);
+    }
 
-        var angle = r.subtract(p).cross2D(q.subtract(p));
-        if(angle > 0) {
-            this.turnLeft();
-        } else if(angle < 0) {
-            this.turnRight();
+    Missile.prototype.track = function(velocity) {
+
+        var flyingAngle = this.getPosition().angle(this.getPosition().add(velocity));
+        var targetAngle = this.getPosition().add(velocity).angle(this.trackTarget.getPosition().add(this.trackTarget.getVelocity()));
+
+        var correction = flyingAngle-targetAngle;
+
+        if(correction > 0) {
+            this.turnRight(Math.abs(correction));
+        }else if (correction < 0) {
+            this.turnLeft(Math.abs(correction));
         }
     }
 
@@ -70,6 +78,8 @@
 
         var movement_x = Math.cos(this.angle * (Math.PI / 180)) * vel;
         var movement_y  = Math.sin(this.angle * (Math.PI / 180)) * vel;
+
+        this.track(new Vector(movement_x, movement_y));
 
         this.position = this.position.add(new Vector(movement_x, movement_y));
         this.lifetime--;
@@ -100,19 +110,18 @@
         return new Vector(x + this.position.x, y + this.position.y);
     };
 
-    Missile.prototype.turnRight = function () {
-        var multiplier = this.afterburner && this.accelerating ? this.afterburnerMultiplier : 1;
-        this.angle += this.turningspeed / multiplier;
+    Missile.prototype.turnRight = function (degrees) {
+
+        this.angle += degrees > this.turningspeed ? this.turningspeed : degrees;
         if (this.angle == 360) {
             this.angle = 0;
         }
     }
 
-    Missile.prototype.turnLeft = function () {
-        var multiplier = this.afterburner && this.accelerating ? this.afterburnerMultiplier : 1;
-        this.angle -= this.turningspeed / multiplier;
+    Missile.prototype.turnLeft = function (degrees) {
+        this.angle -= degrees > this.turningspeed ? this.turningspeed: degrees;
         if (this.angle < 0) {
-            this.angle = 360 - Math.abs(this.turningspeed / multiplier);
+            this.angle = 360 - Math.abs(this.turningspeed);
         }
     }
 

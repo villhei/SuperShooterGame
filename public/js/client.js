@@ -40,7 +40,7 @@ function init() {
     // Initialise keyboard controls
     keys = new Keys();
 
-    socket = io.connect("http://ssg.plop.fi", {port: 8888, transports: ["websocket"]});
+    socket = io.connect("http://localhost", {port: 8888, transports: ["websocket"]});
 
     gameState = new GameState();
 
@@ -135,7 +135,8 @@ function onRemovePlayer(data) {
     if (!removePlayer) {
         console.log("Player not found: " + data.id);
         return;
-    };
+    }
+    ;
     console.log("removing: " + data.id);
     console.log(removePlayer);
     gameState.players.splice(gameState.players.indexOf(removePlayer), 1);
@@ -144,9 +145,11 @@ function onRemovePlayer(data) {
 
 function onGameStateUpdate(data) {
     gameState.ticks.last_server = data.tick;
+
     updatePlayers();
     updateProjectiles();
     updateMissiles();
+    updateScores();
 
     function updateProjectiles() {
         gameState.projectiles = [];
@@ -156,10 +159,11 @@ function onGameStateUpdate(data) {
             gameState.projectiles.push(projectile);
         }
     }
+
     function updateMissiles() {
         gameState.missiles = [];
 
-        data.missiles.forEach(function(missile) {
+        data.missiles.forEach(function (missile) {
             var newMissile = new Missile(new Vector(missile.x, missile.y), new Vector(missile.vel_x, missile.vel_y), missile.angle);
             gameState.missiles.push(newMissile);
         })
@@ -173,6 +177,16 @@ function onGameStateUpdate(data) {
                 player.setJSON(playerInfo);
             }
         }
+    }
+
+    function updateScores() {
+        gameState.scores = [];
+        data.scores.forEach(function (score) {
+            gameState.scores.push(score);
+        });
+        gameState.scores.sort(function(a, b) {
+            return b.score - a.score;
+        })
     }
 
 }
@@ -230,11 +244,11 @@ function updateClientInput(keys) {
 
     // Others
 
-    if(keys.ctrl) {
-        firing_secondary= true;
+    if (keys.ctrl) {
+        firing_secondary = true;
     }
 
-    if(keys.shift) {
+    if (keys.shift) {
         afterburner = true;
     }
 
@@ -278,14 +292,15 @@ function draw() {
         drawPlayer(ctx, player);
     }
 
-    gameState.projectiles.forEach(function(projectile) {
+    gameState.projectiles.forEach(function (projectile) {
         drawProjectile(ctx, projectile);
     })
-    gameState.missiles.forEach(function(missile) {
+    gameState.missiles.forEach(function (missile) {
         drawMissile(ctx, missile);
     })
 
     drawDebugData();
+    drawScores();
 
     function drawPlayer(ctx, player) {
         if (player.id === localPlayer.id) {
@@ -293,31 +308,31 @@ function draw() {
         } else {
             drawShip(ctx, player.ship, "#33A0D6");
         }
-        if(player.ship.alive) {
+        if (player.ship.alive) {
             drawShipThrust(ctx, player.ship);
             drawHealthBox(ctx, player.ship);
         }
-        drawText(ctx, player.getName(), player.ship.getX()-player.ship.size, player.ship.getY() + 2.5 * player.ship.size);
+        drawText(ctx, player.getName(), player.ship.getX() - player.ship.size, player.ship.getY() + 2.5 * player.ship.size);
     }
 
     function drawHealthBox(ctx, ship) {
         var boxwidth = 25;
         var boxheight = 6;
 
-        var box_x = ship.getX() - ship.size*0.5;
-        var box_y = ship.getY() + ship.size*1.2;
+        var box_x = ship.getX() - ship.size * 0.5;
+        var box_y = ship.getY() + ship.size * 1.2;
         ctx.strokeStyle = object_border_color;
         ctx.strokeWeight = 1;
         ctx.fillStyle = 'rgb(0, 0, 0)'
         ctx.strokeRect(box_x, box_y, boxwidth, boxheight);
         ctx.fillStyle = '#F6FF00'
-        ctx.fillRect(box_x+1, box_y+2, (boxwidth-2)*(ship.health/100), boxheight-4);
+        ctx.fillRect(box_x + 1, box_y + 2, (boxwidth - 2) * (ship.health / 100), boxheight - 4);
     }
 
     function drawShipThrust(ctx, ship) {
-        if(ship.accelerating) {
+        if (ship.accelerating) {
             var position = ship.getThrustPosition();
-            if(ship.afterburner) {
+            if (ship.afterburner) {
                 var velocity = ship.getVelocity();
                 var blob = new Vector(position.x - velocity.x, position.y - velocity.y);
                 blob.color = afterburner_color;
@@ -329,12 +344,14 @@ function draw() {
             ship.thrust.push(blob);
         }
         var arc_size = 5;
-        ship.thrust = ship.thrust.filter(function(element) { return element.lifeTime > 0});
+        ship.thrust = ship.thrust.filter(function (element) {
+            return element.lifeTime > 0
+        });
         var multiplier = 0.2;
-        ship.thrust.forEach(function(thrust) {
+        ship.thrust.forEach(function (thrust) {
             thrust.lifeTime--;
             ctx.beginPath();
-            ctx.arc(thrust.x, thrust.y, arc_size*multiplier, 2 * Math.PI, false);
+            ctx.arc(thrust.x, thrust.y, arc_size * multiplier, 2 * Math.PI, false);
             ctx.closePath();
             ctx.fillStyle = thrust.color;
             ctx.fill();
@@ -372,7 +389,7 @@ function draw() {
         ctx.fillStyle = color;
         ctx.fill();
 
-        function drawGlare(){
+        function drawGlare() {
             var color = 'rgba(0,0,0,0.2)'
             ctx.beginPath();
             ctx.moveTo(head.x, head.y);
@@ -383,6 +400,7 @@ function draw() {
             ctx.fillStyle = color;
             ctx.fill();
         }
+
         drawGlare();
     }
 
@@ -420,7 +438,7 @@ function draw() {
         var boxwidth = 200;
         var boxheight = 50;
 
-        var box_x = (canvas.width-boxwidth)/2;
+        var box_x = (canvas.width - boxwidth) / 2;
         var box_y = 0;
 
         var padding = 5;
@@ -435,6 +453,26 @@ function draw() {
         var text3 = 'Score: ' + localPlayer.score;
 
         drawText(ctx, text3, box_x + padding, box_y + 45);
+    }
+
+    function drawScores() {
+        var boxwidth = 200;
+        var boxheight = gameState.players.length*20;
+
+        var box_x = (canvas.width - boxwidth);
+        var box_y = 0;
+
+        var padding = 5;
+        var rowsize = 15;
+
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.2)'
+        ctx.fillRect(box_x, box_y, boxwidth, boxheight);
+        if (gameState.scores) {
+            gameState.scores.forEach(function (score, index) {
+                var text = score.name + " : " + score.score;
+                drawText(ctx, text, box_x + padding, box_y + (index*rowsize + rowsize));
+            })
+        }
     }
 
 };

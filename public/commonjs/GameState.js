@@ -10,6 +10,7 @@
         var entities = [];
         var projectiles = [];
         var missiles = [];
+        var scores =[];
         var drawables = [];
         var sizeX = 500;
         var sizeY= 500;

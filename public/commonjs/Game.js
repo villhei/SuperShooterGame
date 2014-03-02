@@ -87,15 +87,6 @@
     Game.prototype.updateBallistics = function() {
         this.state.projectiles = this.updateWeapon(this.state.projectiles);
         this.state.missiles = this.updateWeapon(this.state.missiles);
-        this.applyTracking(this.state.missiles);
-    }
-
-
-    Game.prototype.applyTracking = function(trackingWeapons) {
-        var game = this;
-        trackingWeapons.forEach(function(trackingWeapon) {
-            trackingWeapon.track(game.state.players);
-        });
     }
 
 
@@ -187,6 +178,7 @@
 
         var missile = new Missile(weaponizedEntity.getWeaponPosition(), new Vector(launch_vel_x, launch_vel_y), we.angle);
         missile.id = we.id;
+        missile.setTrackTraget(this.state.players);
         this.state.missiles.push(missile);
     }
 
