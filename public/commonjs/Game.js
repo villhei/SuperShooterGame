@@ -24,6 +24,7 @@
         this.state = new GameState();
         this.updatesPerSecond = 30;
         this.gameRunner;
+        this.max_idle_time = 60*1000;
     }
 
     Game.prototype.removePlayer = function(playerId) {

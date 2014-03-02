@@ -4,6 +4,7 @@
     "respawnTime": 2000,
     "updatesPerSecond": 30,
     "max_velocity": 30,
+    "max_idle_time": 60000,
     "cannon" : {
         "bulletVelocity" : 15
     },

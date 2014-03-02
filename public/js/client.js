@@ -6,6 +6,7 @@ var canvas,			// Canvas DOM element
     keys,			// Keyboard input
     gameState,      // The game state global
     localPlayer,	// Local player
+    window_active,  // is the window active
     socket;         // The socket
 
 var GameState = exports.GameState;
@@ -31,7 +32,6 @@ function init() {
     // Declare the canvas and rendering context
     canvas = document.getElementById("gameCanvas");
     ctx = canvas.getContext("2d");
-
     // Maximise the canvas
     canvas.width = canvas_width;
     canvas.height = canvas_height;
@@ -40,7 +40,7 @@ function init() {
     // Initialise keyboard controls
     keys = new Keys();
 
-    socket = io.connect("http://ssg.plop.fi", {port: 8888, transports: ["websocket"]});
+    socket = io.connect("http://localhost:", {port: 8888, transports: ["websocket"]});
 
     gameState = new GameState();
 
@@ -64,6 +64,18 @@ var setEventHandlers = function () {
     // Keyboard
     window.addEventListener("keydown", onKeydown, false);
     window.addEventListener("keyup", onKeyup, false);
+
+    /*
+    This could be a better handling too. These leaves KeyDowns active when re-entry
+     */
+    window.onblur = function () {
+        window_active = false;
+    };
+
+    window.onfocus = function () {
+        window_active = true;
+    };
+
 
     // Window resize
     window.addEventListener("resize", onResize, false);
@@ -221,6 +233,10 @@ function update() {
 };
 
 function updateClientInput(keys) {
+
+    if(!window_active) {
+        return {nothing:true};
+    }
 
     var vertical_accel = 0,
         horizontal_accel = 0,

@@ -48,6 +48,7 @@ function init() {
         GAME.respawnTime = config.respawnTime || 1000;
         GAME.updatesPerSecond = config.updatesPerSecond;
         GAME.max_speed = config.max_speed;
+        GAME.max_idle_time = config.max_idle_time;
     });
 
     /*
@@ -117,12 +118,28 @@ function onClientDisconnect() {
 };
 
 function onUpdatePlayer(movementData) {
+    if (movementData.nothing) {
+        idleCheck(this);
+    }
+
     if (!GAME.updatePlayerInput(this.id, movementData)) {
         util.log("Player not found for input update: " + this.id);
         return;
     }
-
 };
+
+function idleCheck(socket) {
+    var timeNow = new Date().getTime();
+    if (!socket.lastUpdate) {
+        socket.lastUpdate = timeNow;
+    } else {
+        if (socket.lastUpdate + GAME.max_idle_time <= timeNow) {
+            util.log("Disconnecting client " + socket.id + " for inactivity, exceeded idle time: " + GAME.max_idle_time);
+            socket.broadcast.emit("remove player", {id: socket.id});
+            socket.disconnect();
+        }
+    }
+}
 
 function onNewPlayer(data) {
 
