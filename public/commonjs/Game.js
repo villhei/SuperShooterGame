@@ -13,7 +13,7 @@
         this.cannon = {
             velocity: 15
         };
-
+        this.max_speed = 15;
         this.respawnTime = 1000;
         this.tickCount = 0;
         this.state = new GameState();
@@ -183,11 +183,16 @@
     Game.prototype.packGameData = function () {
         var players = [];
         var projectiles = [];
+        var scores = [];
 
         var i;
         for (i = 0; i < this.state.players.length; ++i) {
             var playerData = this.state.players[i].toJSON();
             players.push(playerData);
+            scores.push({
+                name: playerData.name,
+                score: playerData.score
+            })
         }
         for (i = 0; i < this.state.projectiles.length; ++i) {
             projectiles.push(this.state.projectiles[i].toJSON());
@@ -195,6 +200,7 @@
         return {
             tick: this.tickCount,
             players: players,
+            scores: scores,
             projectiles: projectiles
         }
     }

@@ -9,6 +9,7 @@
         this.position = position;
         this.velocity = velocity;
         this.lifetime = range || 250;
+        this.turningspeed = 1;
         this.alive = true;
         this.damage = 40;
         this.id = "";

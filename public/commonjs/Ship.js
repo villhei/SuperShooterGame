@@ -5,7 +5,7 @@
     function Ship(pos_x, pos_y, id) {
         this.pos_x = pos_x || 0;
         this.pos_y = pos_y || 0;
-        this.MAX_SPEED = 10;
+        this.MAX_SPEED = 20;
         this.accelspeed = 0.2;
         this.afterburnerMultiplier = 3;
         this.angle = 0.0;
@@ -128,16 +128,18 @@
 
 
     Ship.prototype.turnRight = function () {
-        this.angle += this.turningspeed;
+        var multiplier = this.afterburner && this.accelerating ? this.afterburnerMultiplier : 1;
+        this.angle += this.turningspeed/multiplier;
         if (this.angle == 360) {
             this.angle = 0;
         }
     }
 
     Ship.prototype.turnLeft = function () {
-        this.angle -= this.turningspeed;
+        var multiplier = this.afterburner  && this.accelerating ? this.afterburnerMultiplier : 1;
+        this.angle -= this.turningspeed/multiplier;
         if (this.angle < 0) {
-            this.angle = 360 - Math.abs(this.turningspeed);
+            this.angle = 360 - Math.abs(this.turningspeed/multiplier);
         }
     }
 

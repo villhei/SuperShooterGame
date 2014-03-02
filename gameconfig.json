@@ -3,6 +3,7 @@
     "sizeY" : 800,
     "respawnTime": 2000,
     "updatesPerSecond": 30,
+    "max_velocity": 30,
     "cannon" : {
         "velocity" : 15
     }

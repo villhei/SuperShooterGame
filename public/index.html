@@ -2,39 +2,50 @@
 
 <html lang="en">
 
-	<head>
-		<title>Super shooter game</title>
-		<meta charset="utf-8">
-		
-		<link rel="stylesheet" href="style/reset.css">
-		<link rel="stylesheet" href="style/game.css">
-	</head>
-	
-	<body style="overflow: hidden">
-		<canvas id="gameCanvas" style="border: 1px solid white"></canvas>
-        <label for="playerName">Name:</label>
-        <input type="text" id="playerName" value="WebClient">
-        <button id="setName" onclick="setName()">Set</button>
-        <script>
-            if(typeof exports == 'undefined'){
-                var exports = this['mymodule'] = {};
-            }
-        </script>
-        <script src="http://tunkki.plop.fi:8888/socket.io/socket.io.js"></script>
-        <script src="commonjs/GameState.js"></script>
-        <script src="commonjs/Ship.js"></script>
-        <script src="commonjs/Vector.js"></script>
-        <script src="commonjs/Projectile.js"></script>
-        <script src="commonjs/Player.js"></script>
-        <script src="js/requestAnimationFrame.js"></script>
-		<script src="js/Keys.js"></script>
-		<script src="js/client.js"></script>
-        <script>
+<head>
+    <title>Super shooter game</title>
+    <meta charset="utf-8">
 
-            // Initialise the game
-            init();
-            runGame();
-            animate();
-        </script>
-	</body>
+ <!--   <link rel="stylesheet" href="style/reset.css"> -->
+    <link rel="stylesheet" href="style/game.css">
+</head>
+
+<body style="overflow: hidden">
+<canvas id="gameCanvas" style="border: 1px solid white"></canvas>
+<label for="playerName">Name:</label>
+<input type="text" id="playerName" value="WebClient">
+<button id="setName" onclick="setName()">Set</button>
+<p>
+    This is very much an ALPHA! The game is a multiplayer game, instantly on when you open the page. Set your name on
+    the field above.
+<ul>
+    <li>Up Key: Accelerate</li>
+    <li>Left Key: Turn left</li>
+    <li>Right Key: Turn right</li>
+    <li>Space: Fire cannon</li>
+    <li>Shift Key: Afterburner (with accelerate)</li>
+</ul>
+</p>
+<script>
+    if (typeof exports == 'undefined') {
+        var exports = this['mymodule'] = {};
+    }
+</script>
+<script src="http://tunkki.plop.fi:8888/socket.io/socket.io.js"></script>
+<script src="commonjs/GameState.js"></script>
+<script src="commonjs/Ship.js"></script>
+<script src="commonjs/Vector.js"></script>
+<script src="commonjs/Projectile.js"></script>
+<script src="commonjs/Player.js"></script>
+<script src="js/requestAnimationFrame.js"></script>
+<script src="js/Keys.js"></script>
+<script src="js/client.js"></script>
+<script>
+
+    // Initialise the game
+    init();
+    runGame();
+    animate();
+</script>
+</body>
 </html>

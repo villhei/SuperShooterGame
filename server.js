@@ -43,6 +43,7 @@ function init() {
         }
         GAME.respawnTime = config.respawnTime || 1000;
         GAME.updatesPerSecond = config.updatesPerSecond;
+        GAME.max_speed = config.max_speed;
     });
 
     /*
