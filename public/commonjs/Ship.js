@@ -9,10 +9,10 @@
         this.accelspeed = 0.1;
         this.angle = 0.0;
         this.size = 15;
+        this.id = id;
         this.turningspeed = 3;
         this.vel_x = 0;
         this.vel_y = 0;
-        this.id = id;
         this.alive = true;
         this.health = 100;
         this.firing_primary = false;

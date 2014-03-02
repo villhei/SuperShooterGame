@@ -10,6 +10,8 @@ Vector = require("./public/commonjs/Vector").Vector;
 GameState = require('./public/commonjs/GameState').GameState;
 Projectile = require('./public/commonjs/Projectile').Projectile;
 
+var LOG_PING = false;
+
 var socket,
     gameState,
     gameTickCount,
@@ -23,13 +25,19 @@ function init() {
 
     config.init('gameconfig.json', function (resp) {
         if (resp != 0) {
-            console.log('Could not load config file.');
+            util.log('Could not load config file.');
             return;
         }
+        util.log("**** CONFIG READ ****");
+        util.log("SizeX: " + config.sizeX);
+        util.log("SizeY: " + config.sizeY);
+        util.log("RespawnTime: " + config.respawnTime);
+
         GAME.area = {
             sizeX: config.sizeX || 800,
             sizeY: config.sizeY || 600
         }
+        GAME.respawnTime = config.respawnTime || 1000;
 
     });
     gameState = new GameState();
@@ -70,10 +78,11 @@ function onSocketConnection(clientSocket) {
     clientSocket.on("change name", onChangePlayerName);
     clientSocket.on('pong', function () {
         var player = gameState.playerById(clientSocket.id);
-
         var latency = Date.now() - startTime;
         player.setPing(latency);
-        util.log("Ping for " + clientSocket.id + ": " + latency + "ms");
+        if (LOG_PING) {
+            util.log("Ping for " + clientSocket.id + ": " + latency + "ms");
+        }
     });
 
 
@@ -128,18 +137,16 @@ function onNewPlayer(data) {
     // The minus 5 (half a player size) stops the player being
     // placed right on the egde of the screen
 
-    var startX = Math.round(Math.random() * (config.sizeX)),
-        startY = Math.round(Math.random() * (config.sizeY));
 
     // Initialise the new player
-    var newPlayer = new Player(this.id, startX, startY);
+    var newPlayer = new Player(this.id);
+    respawnShip(newPlayer);
 
     newPlayer.setName(data.name);
-
     console.log("New player connected: " + newPlayer);
 
     this.broadcast.emit("new player", newPlayer.toJSON());
-    this.emit("clientUpdate", newPlayer.toJSON());
+    this.emit("register client", newPlayer.toJSON());
 
     var i, existingPlayer;
     for (i = 0; i < gameState.players.length; i++) {
@@ -169,6 +176,12 @@ function updateClientStates() {
     }
 }
 
+function respawnShip(player) {
+    var startX = Math.round(Math.random() * (GAME.area.sizeX)),
+        startY = Math.round(Math.random() * (GAME.area.sizeY));
+    player.ship = new Ship(startX, startY, player.id);
+}
+
 function runGameCycle() {
     function updatePlayers() {
         for (var i = 0; i < gameState.players.length; ++i) {
@@ -178,6 +191,13 @@ function runGameCycle() {
                 checkAreaBounds(player.ship);
                 if (player.ship.firing_primary) {
                     fireProjectile(player.ship);
+                }
+            } else {
+                var timeNow = new Date().getTime();
+
+                if (player.ship.deathTime + GAME.respawnTime <= timeNow) {
+                    util.log("Respawning player " + player);
+                    respawnShip(player);
                 }
             }
         }
@@ -205,10 +225,12 @@ function runGameCycle() {
                     player.ship.health -= projectile.damage;
                     if (player.ship.health < 0) {
                         player.ship.alive = false;
+                        player.ship.deathTime = new Date().getTime();
+                        util.log("projectileid: " + projectile.id);
                         var killer = gameState.playerById(projectile.id);
                         if (killer) {
-                            killer.score++;
                             util.log(killer + " killed " + player.getName() + ", new score: " + killer.score);
+                            killer.score++;
                         }
                     }
                     projectile.alive = false;
@@ -226,7 +248,6 @@ function runGameCycle() {
 
         var projectile = new Projectile(weaponizedEntity.getPosition(), new Vector(vel_x, vel_y), this.range, projectileVelocity);
         projectile.id = we.id;
-
         gameState.projectiles.push(projectile);
     }
 
@@ -259,7 +280,8 @@ function packGameData() {
 
     var i;
     for (i = 0; i < gameState.players.length; ++i) {
-        players.push(gameState.players[i].toJSON());
+        var playerData = gameState.players[i].toJSON();
+        players.push(playerData);
     }
     for (i = 0; i < gameState.projectiles.length; ++i) {
         projectiles.push(gameState.projectiles[i].toJSON());

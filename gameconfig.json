@@ -1,4 +1,5 @@
 {
     "sizeX" : 800,
-    "sizeY" : 600
+    "sizeY" : 600,
+    "respawnTime": 2000
 }

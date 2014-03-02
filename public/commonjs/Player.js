@@ -1,111 +1,88 @@
-
 (function (exports) {
 
-   exports.Player = function (sessionId, startX, startY) {
-        var id = sessionId,
-            name,
-            score = 0,
-            ping = 0,
-            ship = new Ship(startX, startY, sessionId);
+    exports.Player = Player
+
+    function Player(sessionId) {
+        this.id = sessionId;
+        this.name;
+        this.ship = new Ship(0,0);
+        this.score = 0;
+        this.ping = 0;
+
+    }
+
+    Player.prototype.getId = function () {
+        return this.id;
+    }
 
 
-       var getId = function() {
-           return id;
-       }
-
-        var getX = function () {
-            return ship.getX();
-        };
-
-        var getY = function () {
-            return ship.getY();
-        };
-
-        var setX = function (newX) {
-            x = ship.setX(newX);
-        };
-
-        var setY = function (newY) {
-            y = ship.setY(newY);
-        };
-
-        var setName = function (newName) {
-            name = newName;
-        };
-
-        var getName = function () {
-            return name;
-        };
-
-       var getScore = function() {
-           return score;
-       }
-
-       var setPing = function(newPing) {
-           ping = newPing;
-       }
-
-       var getPing = function() {
-           return ping;
-       }
-
-        var toString = function () {
-            return getName() + "[" + id + "] @ (" + ship.getX() + "," + ship.getY() + ")"
-        };
-
-       var setJSON = function(newValues) {
-           ship.setX(newValues.x);
-           ship.setY(newValues.y);
-           id = newValues.id;
-           name = newValues.name;
-           score = newValues.score;
-           ping = newValues.ping;
-           ship.health = newValues.ship.health;
-           ship.angle = newValues.ship.angle;
-           ship.alive = newValues.ship.alive;
-           ship.vel_x = newValues.ship.vel_x;
-           ship.vel_y = newValues.ship.vel_y;
-
-       }
-
-       var toJSON = function () {
-           return {
-               x: ship.getX(),
-               y: ship.getY(),
-               id: id,
-               name: name,
-               score: score,
-               ping: ping,
-               ship: {
-                   x: ship.getX(),
-                   y: ship.getY(),
-                   health: ship.health,
-                   alive: ship.alive,
-                   angle: ship.angle,
-                   vel_x: ship.vel_x,
-                   vel_y: ship.vel_y
-               }
-
-           }
-       }
-
-        return {
-            getId: getId,
-            getX: getX,
-            getY: getY,
-            setX: setX,
-            setY: setY,
-            toString: toString,
-            toJSON: toJSON,
-            setJSON: setJSON,
-            getName: getName,
-            setName: setName,
-            getPing: getPing,
-            setPing: setPing,
-            ship: ship,
-            id: id,
-            score: score
-        }
+    Player.prototype.setName = function (newName) {
+        this.name = newName;
     };
 
+    Player.prototype.getName = function () {
+        return this.name;
+    };
+
+    Player.prototype.getScore = function () {
+        return this.score;
+    }
+
+    Player.prototype.setScore = function (newScore) {
+        this.score = newScore;
+    }
+
+    Player.prototype.addScore = function () {
+        this.score++;
+    }
+    Player.prototype.setPing = function (newPing) {
+        this.ping = newPing;
+    }
+
+
+    Player.prototype.getPing = function () {
+        return this.ping;
+    }
+
+    Player.prototype.toString = function () {
+        return this.getName() + "[" + this.id + "]";
+    };
+
+    Player.prototype.setJSON = function (newValues) {
+        this.ship.setX(newValues.x);
+        this.ship.setY(newValues.y);
+        this.id = newValues.id;
+        this.name = newValues.name;
+
+        this.score = newValues.score;
+
+        this.ping = newValues.ping;
+        this.ship.health = newValues.ship.health;
+        this.ship.angle = newValues.ship.angle;
+        this.ship.alive = newValues.ship.alive;
+        this.ship.vel_x = newValues.ship.vel_x;
+        this.ship.vel_y = newValues.ship.vel_y;
+
+    }
+
+    Player.prototype.toJSON = function () {
+        return {
+            x: this.ship.getX(),
+            y: this.ship.getY(),
+            id: this.id,
+            name: this.name,
+            score: this.score,
+            ping: this.ping,
+            ship: {
+                x: this.ship.getX(),
+                y: this.ship.getY(),
+                health: this.ship.health,
+                alive: this.ship.alive,
+                angle: this.ship.angle,
+                vel_x: this.ship.vel_x,
+                vel_y: this.ship.vel_y
+            }
+
+        }
+    }
 })(typeof exports === 'undefined' ? this['Player'] = {} : exports);

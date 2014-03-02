@@ -33,7 +33,7 @@ function init() {
     // Initialise keyboard controls
     keys = new Keys();
 
-    socket = io.connect("http://tunkki.plop.fi", {port: 8888, transports: ["websocket"]});
+    socket = io.connect("http://localhost", {port: 8888, transports: ["websocket"]});
 
     gameState = new GameState();
 
@@ -64,8 +64,7 @@ var setEventHandlers = function () {
     socket.on("connect", onSocketConnected);
     socket.on("disconnect", onSocketDisconnect);
     socket.on("new player", onNewPlayer);
-    socket.on("clientUpdate", onClientUpdate);
-    socket.on("update player", onUpdatePlayer);
+    socket.on("register client", onRegisterClient);
     socket.on("remove player", onRemovePlayer);
     socket.on("state update", onGameStateUpdate);
 
@@ -107,9 +106,9 @@ function onSocketDisconnect() {
 };
 
 
-function onClientUpdate(data) {
-    localPlayer.setX(data.x);
-    localPlayer.setY(data.y);
+function onRegisterClient(data) {
+    localPlayer.ship.setX(data.x);
+    localPlayer.ship.setY(data.y);
     localPlayer.id = data.id;
     localPlayer.setName(data.name);
 
@@ -122,18 +121,6 @@ function onNewPlayer(data) {
     gameState.players.push(newPlayer);
 };
 
-function onUpdatePlayer(data) {
-    var movePlayer = gameState.playerById(data.id);
-
-    if (!movePlayer) {
-        console.log("Player not found: " + data.id);
-        return;
-    }
-    ;
-
-    movePlayer.setX(data.x);
-    movePlayer.setY(data.y);
-};
 
 function onRemovePlayer(data) {
     var removePlayer = gameState.playerById(data.id);
@@ -167,7 +154,6 @@ function onGameStateUpdate(data) {
             var player = gameState.playerById(playerInfo.id);
             if (player) {
                 player.setJSON(playerInfo);
-                console.log(playerInfo.score);
             }
         }
     }
@@ -253,7 +239,7 @@ function draw() {
     var i;
     for (i = 0; i < gameState.players.length; i++) {
         var player = gameState.players[i];
-        drawText(player.getName(), player.getX(), player.getY() + 2 * player.ship.size);
+        drawText(player.getName(), player.ship.getX(), player.ship.getY() + 2 * player.ship.size);
 
         if (player.id === localPlayer.id) {
             drawShip(ctx, player.ship, "#29C920");
@@ -330,10 +316,9 @@ function draw() {
         drawText(text, box_x + padding, box_y + 15);
         var text2 = 'Ping: ' + localPlayer.getPing() + " ms";
         drawText(text2, box_x + padding, box_y + 30);
-        var text3 = 'Score: ' + localPlayer.score + " points";
+        var text3 = 'Score: ' + localPlayer.score;
 
         drawText(text3, box_x + padding, box_y + 45);
-
     }
 
 };

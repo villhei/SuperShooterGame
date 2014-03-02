@@ -33,7 +33,7 @@
             ticks: ticks,
             playerById: playerById,
             sizeX: sizeX,
-            sizeY: sizeY
+            sizeY: sizeY,
         }
 
     }
