@@ -40,7 +40,7 @@ function init() {
     // Initialise keyboard controls
     keys = new Keys();
 
-    socket = io.connect("http://localhost", {port: 8888, transports: ["websocket"]});
+    socket = io.connect("http://ssg.plop.fi", {port: 8888, transports: ["websocket"]});
 
     gameState = new GameState();
 
