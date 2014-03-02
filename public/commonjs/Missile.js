@@ -59,6 +59,9 @@
     }
 
     Missile.prototype.track = function(velocity) {
+        if(!this.trackTarget) {
+            return;
+        }
 
         var flyingAngle = this.getPosition().angle(this.getPosition().add(velocity));
         var targetAngle = this.getPosition().add(velocity).angle(this.trackTarget.getPosition().add(this.trackTarget.getVelocity()));
