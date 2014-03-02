@@ -35,6 +35,7 @@ function init() {
     // Maximise the canvas
     canvas.width = canvas_width;
     canvas.height = canvas_height;
+    window_active = true;
 
     localPlayer = new Player();
     // Initialise keyboard controls
