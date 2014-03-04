@@ -234,10 +234,8 @@ function onServerStateUpdate(data) {
                 lastPing = playerInfo.ping;            }
             var player = GAME.state.playerById(playerInfo.id);
             if (player) {
-                console.log("setting other player");
                 player.setJSON(playerInfo);
             } else {
-                console.log("Player not found for update: " + playerInfo.id);
             }
         }
     }
