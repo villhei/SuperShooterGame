@@ -169,7 +169,6 @@ function onRemovePlayer(data) {
     console.log("removing: " + data.id);
     console.log(removePlayer);
     serverGameState.players.splice(serverGameState.players.indexOf(removePlayer), 1);
-    GAME.state.players.splice(serverGameState.players.indexOf(removePlayer), 1);
 };
 
 
@@ -218,7 +217,6 @@ function onServerStateUpdate(data) {
 
     function updateMissiles() {
         serverGameState.missiles = [];
-
         data.missiles.forEach(function (missile) {
             var newMissile = new Missile(new Vector(missile.x, missile.y), new Vector(missile.vel_x, missile.vel_y), missile.angle);
             serverGameState.missiles.push(newMissile);
@@ -234,7 +232,7 @@ function onServerStateUpdate(data) {
                 localPlayer.setJSON(playerInfo);
                 lastClientUpdate = playerInfo.lastReceivedUpdate;
                 lastPing = playerInfo.ping;            }
-            var player = serverGameState.playerById(playerInfo.id);
+            var player = GAME.state.playerById(playerInfo.id);
             if (player) {
                 player.setJSON(playerInfo);
             }
@@ -251,7 +249,6 @@ function onServerStateUpdate(data) {
         })
     }
 
-    GAME.state.players = serverGameState.players;
     GAME.state.missiles = serverGameState.missiles;
     GAME.state.projectiles = serverGameState.projectiles;
 
@@ -261,7 +258,7 @@ function onServerStateUpdate(data) {
     var i = 0;
     var firstFrame = 0;
     inputHistory.forEach(function (element) {
-        if(i == 0) {
+        if (i == 0) {
             firstFrame = element.timeStamp;
         }
         i++
@@ -269,7 +266,7 @@ function onServerStateUpdate(data) {
     })
     if (i > 0) {
         var timeNow = new Date().getTime();
-        var skipTime = timeNow -firstFrame;
+        var skipTime = timeNow - firstFrame;
         console.log("Skipping forward for: " + skipTime)
         GAME.runGameCycle(skipTime);
     }
