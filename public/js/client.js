@@ -197,6 +197,7 @@ function update() {
 
 
 var lastClientUpdate = 0;
+var lastPing = 0;
 function onServerStateUpdate(data) {
     serverGameState.ticks = data.ticks;
     GAME.state.sizeX = data.sizeX;
@@ -232,7 +233,7 @@ function onServerStateUpdate(data) {
             if (playerInfo.id == localPlayer.id) {
                 localPlayer.setJSON(playerInfo);
                 lastClientUpdate = playerInfo.lastReceivedUpdate;
-            }
+                lastPing = playerInfo.ping;            }
             var player = serverGameState.playerById(playerInfo.id);
             if (player) {
                 player.setJSON(playerInfo);
@@ -268,7 +269,7 @@ function onServerStateUpdate(data) {
     })
     if (i > 0) {
         var timeNow = new Date().getTime();
-        GAME.runGameCycle(timeNow -firstFrame);
+        GAME.runGameCycle(timeNow -firstFrame + lastPing);
     }
 
 
