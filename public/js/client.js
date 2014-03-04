@@ -139,7 +139,7 @@ function onSocketDisconnect() {
 
 
 function onRegisterClient(data) {
-    GAME.state.players.splice(1,1);
+    GAME.state.players = GAME.state.players.splice(1,1);
     localPlayer = new Player(data.id);
     localPlayer.ship.setX(data.x);
     localPlayer.ship.setY(data.y);
@@ -147,6 +147,7 @@ function onRegisterClient(data) {
     console.log("Registered remote id: " + data.id);
     localPlayer.id = data.id;
     localPlayer.setName(data.name);
+    GAME.state.players.push(localPlayer);
 
 }
 function onNewPlayer(data) {
