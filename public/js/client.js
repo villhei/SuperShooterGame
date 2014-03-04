@@ -10,6 +10,7 @@ var canvas,			// Canvas DOM element
     socket;         // The socket
 
 var GameState = exports.GameState;
+var Game = exports.Game;
 var Player = exports.Player;
 var Ship = exports.Ship;
 var Vector = exports.Vector;
@@ -41,7 +42,7 @@ function init() {
     // Initialise keyboard controls
     keys = new Keys();
 
-    socket = io.connect("http://ssg.plop.fi::", {port: 8888, transports: ["websocket"]});
+    socket = io.connect("http://localhost", {port: 8888, transports: ["websocket"]});
 
     gameState = new GameState();
 
@@ -313,6 +314,7 @@ function draw() {
         drawProjectile(ctx, projectile);
     })
     gameState.missiles.forEach(function (missile) {
+        console.log(missile);
         drawMissile(ctx, missile);
     })
 

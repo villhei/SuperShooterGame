@@ -6,10 +6,13 @@
     "max_velocity": 30,
     "max_idle_time": 60000,
     "cannon" : {
-        "bulletVelocity" : 15
+        "velocity" : 15,
+        "fireDelay": 10,
+        "reloadDelay": 50
     },
     "missile" : {
-        "missileVelocity" : 25,
-        "fireDelay": 1500
+        "velocity" : 25,
+        "fireDelay": 100,
+        "reloadDelay": 1500
     }
 }

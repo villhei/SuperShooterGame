@@ -39,10 +39,11 @@ function init() {
             sizeX: config.sizeX || 800,
             sizeY: config.sizeY || 600
         }
-        GAME.cannon = {
-            bulletVelocity: config.cannon.bulletVelocity
-        }
-        GAME.missile.missileVelocity = config.missile.missileVelocity;
+
+        GAME.cannon.velocity = config.cannon.velocity;
+        GAME.cannon.fireDelay = config.cannon.fireDelay;
+        GAME.cannon.reloadDelay = config.cannon.reloadDelay;
+        GAME.missile.velocity = config.missile.velocity;
         GAME.missile.fireDelay = config.missile.fireDelay;
 
         GAME.respawnTime = config.respawnTime || 1000;
@@ -71,10 +72,10 @@ function init() {
 
     setEventHandlers();
 
-    GAME.run(function (gameState) {
+    GAME.run(function clientStateUpdate(gameState) {
         var clients = socket.sockets.clients(); // This returns an array with all connected clients
         clients.forEach(function (client) {
-            client.emit('state update', gameState)
+            client.volatile.emit('state update', gameState)
         })
     });
 };
@@ -103,7 +104,7 @@ function onSocketConnection(clientSocket) {
 
     var ping = setInterval(function () {
         startTime = Date.now();
-        clientSocket.emit('ping');
+        clientSocket.volatile.emit('ping');
     }, 1000);
 };
 

@@ -7,7 +7,7 @@
 
     function Projectile(position, launchVelocity) {
         this.position = position;
-        this.velocity = launchVelocity;
+        this.velocity = launchVelocity || 15;
         this.lifetime = 15;
         this.alive = true;
         this.damage = 7;

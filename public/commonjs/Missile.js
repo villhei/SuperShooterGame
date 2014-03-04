@@ -15,7 +15,7 @@
         this.turningspeed = 10;
         this.trackTarget = null;
         this.alive = true;
-        this.damage = 50;
+        this.damage = 35;
         this.id = "";
         this.size = 7;
     };
@@ -55,7 +55,6 @@
             return;
         }
         this.trackTarget = newTarget;
-        console.log("target: " + newTarget.name);
     }
 
     Missile.prototype.track = function(velocity) {
