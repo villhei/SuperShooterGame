@@ -16,6 +16,7 @@ var Ship = exports.Ship;
 var Vector = exports.Vector;
 var Projectile = exports.Projectile;
 var Missile = exports.Missile;
+var Asteroid = exports.Asteroid;
 
 
 var canvas_width = 800;
@@ -42,7 +43,7 @@ function init() {
     keys = new Keys();
 
     try {
-        socket = io.connect("http://ssg.plop.fi", {port: 8888, transports: ["websocket"]});
+        socket = io.connect("http://localhost", {port: 8888, transports: ["websocket"]});
     } catch (ex) {
         console.log("Failed to instantiate Socket.IO ", ex.message);
     }
@@ -203,6 +204,7 @@ function onServerStateUpdate(data) {
     updatePlayers();
     updateProjectiles();
     updateMissiles();
+    updateAsteroids();
     updateScores();
 
     function updateProjectiles() {
@@ -221,6 +223,16 @@ function onServerStateUpdate(data) {
             serverGameState.missiles.push(newMissile);
         })
     }
+
+    function updateAsteroids() {
+        serverGameState.asteroids = [];
+        data.asteroids.forEach(function (asteroidInfo) {
+            var newAsteroid = new Asteroid();
+            newAsteroid.setJSON(asteroidInfo);
+            serverGameState.asteroids.push(newAsteroid);
+        })
+    }
+
 
     function updatePlayers() {
 
@@ -253,6 +265,7 @@ function onServerStateUpdate(data) {
 
     GAME.state.missiles = serverGameState.missiles;
     GAME.state.projectiles = serverGameState.projectiles;
+    GAME.state.asteroids = serverGameState.asteroids;
 
     inputHistory = inputHistory.filter(function (element) {
         return element.packageNum >= lastClientUpdate;
@@ -383,6 +396,9 @@ function draw(frameTime) {
         drawMissile(ctx, missile);
     })
 
+    GAME.state.asteroids.forEach(function (asteroid) {
+        drawAsteroid(ctx, asteroid);
+    })
     drawDebugData();
     drawScores();
 
@@ -495,6 +511,19 @@ function draw(frameTime) {
         var oldStyle = ctx.fillStyle;
         ctx.beginPath();
         ctx.arc(position.x, position.y, projectile_size, 0, 2 * Math.PI, false);
+        ctx.fillStyle = projectile_color;
+        ctx.closePath();
+        ctx.fill();
+        ctx.fillStyle = oldStyle;
+    }
+
+    function drawAsteroid(ctx, asteroid) {
+        var position = asteroid.position;
+        var size = asteroid.radius;
+        var projectile_color = '#fff'
+        var oldStyle = ctx.fillStyle;
+        ctx.beginPath();
+        ctx.arc(position.x, position.y, size, 0, 2 * Math.PI, false);
         ctx.fillStyle = projectile_color;
         ctx.closePath();
         ctx.fill();

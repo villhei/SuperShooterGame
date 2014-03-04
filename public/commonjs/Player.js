@@ -78,6 +78,8 @@
         this.ship.turningRight = newValues.ship.turningRight;
         this.ship.accelerating = newValues.ship.accelerating;
         this.ship.afterburner = newValues.ship.afterburner;
+        this.ship.radius = newValues.ship.radius;
+        this.ship.size = newValues.ship.size;
 
     }
 
@@ -93,6 +95,8 @@
             ship: {
                 x: this.ship.getX(),
                 y: this.ship.getY(),
+                size: this.ship.size,
+                radius: this.ship.radius,
                 health: this.ship.health,
                 lastReceivedUpdate: this.lastReceivedUpdate,
                 alive: this.ship.alive,

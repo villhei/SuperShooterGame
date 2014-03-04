@@ -108,6 +108,20 @@
         }
     }
 
+    Game.prototype.spawnAsteroid = function (position) {
+        if (!position) {
+            var startX = Math.round(Math.random() * (this.state.sizeX)),
+                startY = Math.round(Math.random() * (this.state.sizeY));
+            position = new Vector(startX, startY);
+        }
+        var vel_x = Math.random() * 10 - 10;
+        var vel_y = Math.random() * 10 - 10;
+        var velocity = new Vector(vel_x, vel_y);
+        var asteroid = new Asteroid(Math.random() * 100, position, velocity);
+        this.state.asteroids.push(asteroid);
+        console.log(asteroid);
+    }
+
     Game.prototype.updatePlayerInput = function (playerId, movementData) {
 
         var targetPlayer = this.state.playerById(playerId);
@@ -127,11 +141,35 @@
     Game.prototype.runGameCycle = function (timeDelta) {
         this.updateBallistics(timeDelta);
         this.updatePlayers(timeDelta);
+        this.updateAsteroids(timeDelta);
     }
 
     Game.prototype.updateBallistics = function (timeDelta) {
         this.state.projectiles = this.updateWeapon(timeDelta, this.state.projectiles);
         this.state.missiles = this.updateWeapon(timeDelta, this.state.missiles);
+    }
+
+    Game.prototype.updateAsteroids = function (timeDelta) {
+        var game = this;
+        this.state.asteroids.forEach(function (asteroid) {
+            if (!asteroid.alive) {
+                console.log("kaboom!")
+            } else {
+                asteroid.move(timeDelta);
+                game.checkAreaBounds(asteroid);
+                game.state.players.forEach(function (player) {
+                    if (player.ship.getPosition().subtract(asteroid.position).length() <= player.ship.size + asteroid.radius) {
+                        asteroid.collision(player.ship);
+                    }
+                });
+
+            }
+        })
+        var active = this.state.asteroids.filter(function (asteroid) {
+            return asteroid.alive;
+        });
+
+        this.state.asteroids = active;
     }
 
 
@@ -186,12 +224,19 @@
                         } else {
                             console.log(player.getName() + " died because of an unknown reason");
                         }
-
                     }
                     projectile.alive = false;
                 }
             }
-        })
+        });
+        game.state.asteroids.forEach(function (asteroid) {
+            if (projectile.position.distance(asteroid.getPosition()) <= asteroid.radius) {
+                asteroid.health -= projectile.damage;
+                if (asteroid.health <= 0) {
+                    asteroid.alive = false;
+                }
+            }
+        });
     }
 
     Game.prototype.fireWeapon = function (weaponizedEntity, weapon, TypeFired) { // Such as ship
@@ -224,16 +269,16 @@
         var me = movableEntity;
         try {
             if (me.getPosition().x < 0) {
-                me.setX(this.state.sizeX);
+                me.getPosition().x = this.state.sizeX;
             }
             if (me.getPosition().x > this.state.sizeX) {
-                me.setX(0);
+                me.getPosition().x = 0;
             }
             if (me.getPosition().y < 0) {
-                me.setY(this.state.sizeY);
+                me.getPosition().y = this.state.sizeY;
             }
             if (me.getPosition().y > this.state.sizeY) {
-                me.setY(0);
+                me.getPosition().y = 0;
             }
         } catch (ex) {
             console.log("Error with something area bounds: ", ex);
@@ -264,6 +309,7 @@
         var projectiles = [];
         var missiles = [];
         var scores = [];
+        var asteroids = [];
         var tickCount = this.state.ticks;
         var sizeX = this.state.sizeX;
         var sizeY = this.state.sizeY;
@@ -282,7 +328,10 @@
         }
         this.state.missiles.forEach(function (missile) {
             missiles.push(missile.toJSON());
-        })
+        });
+        this.state.asteroids.forEach(function (asteroid) {
+            asteroids.push(asteroid.toJSON());
+        });
         return {
             sizeX: sizeX,
             sizeY: sizeY,
@@ -290,10 +339,11 @@
             scores: scores,
             ticks: tickCount,
             missiles: missiles,
+            asteroids: asteroids,
             projectiles: projectiles
         }
     }
 
 
 })
-(typeof exports === 'undefined' ? this['Game'] = {} : exports);
+    (typeof exports === 'undefined' ? this['Game'] = {} : exports);

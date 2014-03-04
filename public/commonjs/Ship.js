@@ -10,12 +10,14 @@
         this.afterburnerMultiplier = 2;
         this.angle = 0.0;
         this.size = 15;
+        this.radius = 15;
         this.id = id;
         this.turningspeed = 7;
         this.vel_x = 0;
         this.vel_y = 0;
         this.alive = true;
         this.health = 100;
+        this.mass = 20;
         this.firing_primary = false;
         this.firing_secondary = false;
         this.missile = {
@@ -125,6 +127,7 @@
     };
 
     Ship.prototype.update = function (timeDelta) {
+        this.velocity = new Vector(this.vel_x, this.vel_y);
         this.applySpeedLimit();
         this.pos_x += this.vel_x*(timeDelta/1000);
         this.pos_y += this.vel_y*(timeDelta/1000);

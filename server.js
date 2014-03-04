@@ -11,7 +11,7 @@ Game = require("./public/commonjs/Game").Game;
 GameState = require('./public/commonjs/GameState').GameState;
 Projectile = require('./public/commonjs/Projectile').Projectile;
 Missile = require('./public/commonjs/Missile').Missile;
-
+Asteroid = require('./public/commonjs/Asteroid').Asteroid;
 var LOG_PING = false;
 
 var socket,
@@ -70,6 +70,7 @@ function init() {
     });
 
     setEventHandlers();
+    GAME.spawnAsteroid();
 
     GAME.run(function clientStateUpdate(gameState) {
         var clients = socket.sockets.clients(); // This returns an array with all connected clients
