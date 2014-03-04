@@ -11,7 +11,7 @@
         var projectiles = [];
         var missiles = [];
         var sizeX = 800;
-        var sizeY= 800;
+        var sizeY = 800;
         var ticks = 0;
         function playerById(id) {
             var i;

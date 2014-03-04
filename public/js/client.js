@@ -53,7 +53,7 @@ function init() {
     serverGameState = new GameState();
 
     GAME = new Game();
-
+    GAME.updatesPerSecond = 60;
     GAME.state.players.push(localPlayer);
 
     // Start listening for events
@@ -177,11 +177,11 @@ function onRemovePlayer(data) {
 };
 
 function onServerStateUpdate(data) {
-    console.log(data.ticks);
     serverGameState.ticks = data.ticks;
     GAME.state.sizeX = data.sizeX;
+    console.log("received x: " + data.sizeX);
     GAME.state.sizeY = data.sizeY;
-
+    console.log("received y: " + data.sizeY);
     updatePlayers();
     updateProjectiles();
     updateMissiles();

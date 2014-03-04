@@ -4,10 +4,10 @@
 
         function Vector(x, y) {
         if (typeof x !== 'number') {
-            throw new TypeError("Expected a number but received", x);
+            throw new TypeError("Expected a number but received" +x);
         }
         if (typeof y !== 'number') {
-            throw new TypeError("Expected a number but received", y);
+            throw new TypeError("Expected a number but received" + y);
         }
         this.x = x;
         this.y = y;

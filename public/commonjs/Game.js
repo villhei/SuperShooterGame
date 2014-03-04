@@ -3,11 +3,6 @@
     exports.Game = Game;
 
     function Game() {
-        this.area = {
-            sizeX: 800,
-            sizeY: 600
-        }
-
         this.missile = {
             velocity: 10,
             fireDelay: 500,
@@ -85,8 +80,8 @@
     }
 
     Game.prototype.respawnShip = function (player) {
-            var startX = Math.round(Math.random() * (this.area.sizeX)),
-                startY = Math.round(Math.random() * (this.area.sizeY));
+            var startX = Math.round(Math.random() * (this.state.sizeX)),
+                startY = Math.round(Math.random() * (this.state.sizeY));
             player.ship = new Ship(startX, startY, player.id);
     }
 
@@ -200,18 +195,25 @@
     Game.prototype.checkAreaBounds = function (movableEntity) {
 
         var me = movableEntity;
-
+        try {
         if (me.getPosition().x < 0) {
-            me.setX(this.area.sizeX);
+            me.setX(this.state.sizeX);
         }
-        if (me.getPosition().x > this.area.sizeX) {
+        if (me.getPosition().x > this.state.sizeX) {
             me.setX(0);
         }
         if (me.getPosition().y < 0) {
-            me.setY(this.area.sizeY);
+            me.setY(this.state.sizeY);
         }
-        if (me.getPosition().y > this.area.sizeY) {
+        if (me.getPosition().y > this.state.sizeY) {
             me.setY(0);
+        }
+        } catch(ex) {
+            console.log("area size: ", this.state.sizeX);
+            console.log("area size: ", this.state.sizeY);
+            console.log("Error with something: ", ex);
+            console.log("Error with something: ", me);
+
         }
     }
 
@@ -232,6 +234,8 @@
         var missiles = [];
         var scores = [];
         var tickCount = this.state.ticks;
+        var sizeX = this.state.sizeX;
+        var sizeY = this.state.sizeY;
 
         var i;
         for (i = 0; i < this.state.players.length; ++i) {
@@ -249,6 +253,8 @@
             missiles.push(missile.toJSON());
         })
         return {
+            sizeX: sizeX,
+            sizeY: sizeY,
             players: players,
             scores: scores,
             ticks: tickCount,
