@@ -5,9 +5,9 @@
     function Ship(pos_x, pos_y, id) {
         this.pos_x = pos_x || 0;
         this.pos_y = pos_y || 0;
-        this.MAX_SPEED = 1500;
-        this.accelspeed = 10;
-        this.afterburnerMultiplier = 3;
+        this.MAX_SPEED = 350;
+        this.accelspeed = 8;
+        this.afterburnerMultiplier = 2;
         this.angle = 0.0;
         this.size = 15;
         this.id = id;

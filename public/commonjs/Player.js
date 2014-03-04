@@ -74,6 +74,8 @@
         this.ship.vel_x = newValues.ship.vel_x;
         this.ship.vel_y = newValues.ship.vel_y;
         this.ship.angle = newValues.ship.angle;
+        this.ship.turningLeft = newValues.ship.turningLeft;
+        this.ship.turningRight = newValues.ship.turningRight;
         this.ship.accelerating = newValues.ship.accelerating;
         this.ship.afterburner = newValues.ship.afterburner;
 
@@ -98,7 +100,9 @@
                 accelerating: this.ship.accelerating,
                 afterburner: this.ship.afterburner,
                 vel_x: this.ship.vel_x,
-                vel_y: this.ship.vel_y
+                vel_y: this.ship.vel_y,
+                turningLeft: this.turningLeft,
+                turningRight: this.turningRight
             }
 
         }

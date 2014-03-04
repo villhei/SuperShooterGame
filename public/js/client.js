@@ -269,15 +269,11 @@ function onServerStateUpdate(data) {
     })
     if (i > 0) {
         var timeNow = new Date().getTime();
-        GAME.runGameCycle(timeNow -firstFrame + lastPing);
+        var skipTime = timeNow -firstFrame;
+        console.log("Skipping forward for: " + skipTime)
+        GAME.runGameCycle(skipTime);
     }
 
-
-    /** This code works
-     *
-
-
-     **/
 }
 
 function updateClientInput(keys) {
