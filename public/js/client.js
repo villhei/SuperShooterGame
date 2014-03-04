@@ -130,7 +130,7 @@ function onResize(e) {
 function onSocketConnected() {
     console.log("Connected to socket server");
 
-    socket.emit("new player", {name: "WebClient"});
+    socket.emit("new player", {name: "Anonymous"});
 };
 
 function onSocketDisconnect() {
@@ -151,16 +151,15 @@ function onRegisterClient(data) {
 
 }
 function onNewPlayer(data) {
-    var newPlayer = new Player(data.id, data.x, data.y);
+    var newPlayer = new Player(data.id);
     newPlayer.setJSON(data);
-
     console.log("New player connected: " + newPlayer);
     GAME.state.players.push(newPlayer);
 };
 
 
 function onRemovePlayer(data) {
-    var removePlayer = serverGameState.playerById(data.id);
+    var removePlayer = GAME.state.playerById(data.id);
 
     if (!removePlayer) {
         console.log("Player not found for removal: " + data.id);
@@ -169,7 +168,7 @@ function onRemovePlayer(data) {
     ;
     console.log("removing: " + data.id);
     console.log(removePlayer);
-    serverGameState.players.splice(serverGameState.players.indexOf(removePlayer), 1);
+    GAME.state.players.splice(GAME.state.players.indexOf(removePlayer), 1);
 };
 
 
@@ -237,6 +236,7 @@ function onServerStateUpdate(data) {
             if (player) {
                 player.setJSON(playerInfo);
             } else {
+                console.log(player);
             }
         }
     }
