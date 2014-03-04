@@ -139,6 +139,7 @@ function onSocketDisconnect() {
 
 
 function onRegisterClient(data) {
+    GAME.state.players.splice(1,1);
     localPlayer = new Player(data.id);
     localPlayer.ship.setX(data.x);
     localPlayer.ship.setY(data.y);
@@ -153,7 +154,6 @@ function onNewPlayer(data) {
     newPlayer.id = data.id;
 
     console.log("New player connected: " + newPlayer);
-    serverGameState.players.push(newPlayer);
     GAME.state.players.push(newPlayer);
 };
 
@@ -234,7 +234,10 @@ function onServerStateUpdate(data) {
                 lastPing = playerInfo.ping;            }
             var player = GAME.state.playerById(playerInfo.id);
             if (player) {
+                console.log("setting other player");
                 player.setJSON(playerInfo);
+            } else {
+                console.log("Player not found for update: " + playerInfo.id);
             }
         }
     }
@@ -267,7 +270,6 @@ function onServerStateUpdate(data) {
     if (i > 0) {
         var timeNow = new Date().getTime();
         var skipTime = timeNow - firstFrame;
-        console.log("Skipping forward for: " + skipTime)
         GAME.runGameCycle(skipTime);
     }
 
