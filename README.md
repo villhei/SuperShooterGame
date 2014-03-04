@@ -13,6 +13,11 @@ The client sends it's input decisions to the server and renderes the server-prov
 The server and the client communicate over a Socket.IO -based prototocol
 
 TASKLIST
-- Replicate the game logic in the client
-- Add time stepping, server & client running on different speeds
-- Client-side state prediction with signed input packages
+- [x] Replicate the game logic in the client
+- [x] Add time stepping, server & client running on different speeds
+- [x] Client-side state prediction with signed input packages
+- [x] Implement asteroid / terrain system
+- [ ] Improve asteroid / terrains
+- [ ] Improve client-side prediction
+- [ ] More game mechanic
+- [ ] Sounds
