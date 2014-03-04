@@ -80,30 +80,30 @@
     }
 
     Game.prototype.respawnShip = function (player) {
-            var startX = Math.round(Math.random() * (this.state.sizeX)),
-                startY = Math.round(Math.random() * (this.state.sizeY));
-            player.ship = new Ship(startX, startY, player.id);
+        var startX = Math.round(Math.random() * (this.state.sizeX)),
+            startY = Math.round(Math.random() * (this.state.sizeY));
+        player.ship = new Ship(startX, startY, player.id);
     }
 
-    Game.prototype.runGameCycle = function () {
-        this.updateBallistics();
-        this.updatePlayers();
+    Game.prototype.runGameCycle = function (timeDelta) {
+        this.updateBallistics(timeDelta);
+        this.updatePlayers(timeDelta);
     }
 
-    Game.prototype.updateBallistics = function () {
-        this.state.projectiles = this.updateWeapon(this.state.projectiles);
-        this.state.missiles = this.updateWeapon(this.state.missiles);
+    Game.prototype.updateBallistics = function (timeDelta) {
+        this.state.projectiles = this.updateWeapon(timeDelta, this.state.projectiles);
+        this.state.missiles = this.updateWeapon(timeDelta, this.state.missiles);
     }
 
 
-    Game.prototype.updateWeapon = function (weaponType) {
+    Game.prototype.updateWeapon = function (timeDelta, weaponType) {
         var livingProjectiles = weaponType.filter(function (element) {
             return element.alive;
         });
         for (var i = 0; i < livingProjectiles.length; ++i) {
             var projectile = livingProjectiles[i];
             if (projectile.alive) {
-                projectile.move();
+                projectile.move(timeDelta);
                 this.checkAreaBounds(projectile);
                 this.checkWeaponHits(projectile)
             }
@@ -111,13 +111,13 @@
         return livingProjectiles;
     }
 
-    Game.prototype.updatePlayers = function () {
+    Game.prototype.updatePlayers = function (timeDelta) {
         for (var i = 0; i < this.state.players.length; ++i) {
             var player = this.state.players[i];
             if (player.ship.alive) {
 
-                player.ship.regenerate();
-                player.ship.update();
+                player.ship.regenerate(timeDelta);
+                player.ship.update(timeDelta);
                 this.checkAreaBounds(player.ship);
                 if (player.ship.firing_primary) {
                     var bullet = this.fireWeapon(player.ship, player.ship.cannon, Projectile);
@@ -196,19 +196,19 @@
 
         var me = movableEntity;
         try {
-        if (me.getPosition().x < 0) {
-            me.setX(this.state.sizeX);
-        }
-        if (me.getPosition().x > this.state.sizeX) {
-            me.setX(0);
-        }
-        if (me.getPosition().y < 0) {
-            me.setY(this.state.sizeY);
-        }
-        if (me.getPosition().y > this.state.sizeY) {
-            me.setY(0);
-        }
-        } catch(ex) {
+            if (me.getPosition().x < 0) {
+                me.setX(this.state.sizeX);
+            }
+            if (me.getPosition().x > this.state.sizeX) {
+                me.setX(0);
+            }
+            if (me.getPosition().y < 0) {
+                me.setY(this.state.sizeY);
+            }
+            if (me.getPosition().y > this.state.sizeY) {
+                me.setY(0);
+            }
+        } catch (ex) {
             console.log("area size: ", this.state.sizeX);
             console.log("area size: ", this.state.sizeY);
             console.log("Error with something: ", ex);
@@ -220,12 +220,20 @@
     Game.prototype.run = function (gameStateUpdater) {
         var game = this;
         game.state.ticks = 0;
-        this.gameRunner = setInterval(function () {
-            game.state.ticks = game.state.ticks+1;
-            game.runGameCycle();
+        var lastUpdate = 0;
+        var updateDelay = 1000 / this.updatesPerSecond;
 
-            gameStateUpdater(game.packGameData());
-        }, 1000 / this.updatesPerSecond);
+        this.gameRunner = setInterval(function () {
+            var beforeFrame = new Date().getTime();
+            if (lastUpdate + updateDelay <= beforeFrame) {
+
+                game.state.ticks++;
+                game.runGameCycle(beforeFrame - lastUpdate);
+                gameStateUpdater(game.packGameData());
+                var afterFrame = new Date().getTime();
+                lastUpdate = afterFrame;
+            }
+        }, updateDelay);
     }
 
     Game.prototype.packGameData = function () {

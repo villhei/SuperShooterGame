@@ -9,7 +9,7 @@
         this.position = position;
         this.speed = 30;
         this.velocity = velocity;
-        this.lifetime = 15;
+        this.lifetime = 600;
         this.angle = angle;
         this.accelspeed = 0.3;
         this.turningspeed = 10;
@@ -74,17 +74,17 @@
         }
     }
 
-    Missile.prototype.move = function () {
+    Missile.prototype.move = function (timeDelta) {
 
         var vel = this.velocity.length();
 
-        var movement_x = Math.cos(this.angle * (Math.PI / 180)) * vel;
-        var movement_y  = Math.sin(this.angle * (Math.PI / 180)) * vel;
+        var movement_x = Math.cos(this.angle * (Math.PI / 180)) * vel * timeDelta/1000;
+        var movement_y  = Math.sin(this.angle * (Math.PI / 180)) * vel * timeDelta/1000;
 
         this.track(new Vector(movement_x, movement_y));
 
         this.position = this.position.add(new Vector(movement_x, movement_y));
-        this.lifetime--;
+        this.lifetime -= timeDelta;
         if (this.lifetime < 0) {
             this.alive = false;
         }

@@ -5,8 +5,8 @@
     function Ship(pos_x, pos_y, id) {
         this.pos_x = pos_x || 0;
         this.pos_y = pos_y || 0;
-        this.MAX_SPEED = 20;
-        this.accelspeed = 0.2;
+        this.MAX_SPEED = 1500;
+        this.accelspeed = 200;
         this.afterburnerMultiplier = 3;
         this.angle = 0.0;
         this.size = 15;
@@ -19,38 +19,29 @@
         this.firing_primary = false;
         this.firing_secondary = false;
         this.missile = {
-            fireDelay: 100,
+            fireDelay: 200,
             lastFire: 0,
             clipSize: 3,
             clipContent: 3,
             reloadDelay: 2000,
             reloadAmount: 1,
-            velocity: 20
+            velocity: 600
         }
         this.cannon = {
             fireDelay: 10,
             lastFire: 0,
-            clipSize: 40,
-            clipContent: 40,
-            reloadDelay: 100,
+            clipSize: 20,
+            clipContent: 20,
+            reloadDelay: 300,
             reloadAmount: 5,
-            velocity: 15
+            velocity: 500
         }
         this.afterburner = false;
         this.accelerating = false;
-        // Future stuff, required in timestepping
-        this.lastRegeneration = 0;
-        this.regenerationDelay = 10;
-        this.regenerationAmount = 0.5;
+        this.healthPerSecond = 0.5;
         this.thrust = [];
     };
 
-    Ship.prototype.angleTo = function (asteroid) {
-        var dx = this.pos_x - asteroid.pos_x;
-        var dy = this.pos_y - asteroid.pos_y;
-        var angle = Math.atan2(dy, dx) * (180 / Math.PI);
-        return angle;
-    };
 
     Ship.prototype.getPosition = function () {
         return new Vector(this.pos_x, this.pos_y);
@@ -78,13 +69,13 @@
         return new Vector(this.vel_x, this.vel_y);
     }
 
-    Ship.prototype.regenerate = function () {
+    Ship.prototype.regenerate = function (timeDelta) {
         var timeNow = new Date().getTime();
 
         checkReload(this.missile);
         checkReload(this.cannon);
         if (this.health < 100) {
-            this.health += this.regenerationAmount;
+            this.health += this.healthPerSecond*(timeDelta/1000);
         }
 
         function checkReload(weapon) {
@@ -127,19 +118,21 @@
     };
 
 
-    Ship.prototype.accelerate = function () {
+    Ship.prototype.accelerate = function (timeDelta) {
         var multiplier = this.afterburner ? this.afterburnerMultiplier : 1;
+        multiplier *= timeDelta/1000;
+
         this.vel_x += Math.cos(this.angle * (Math.PI / 180)) * this.accelspeed * multiplier;
         this.vel_y += Math.sin(this.angle * (Math.PI / 180)) * this.accelspeed * multiplier;
     };
 
-    Ship.prototype.update = function () {
+    Ship.prototype.update = function (timeDelta) {
         if (this.accelerating) {
-            this.accelerate();
+            this.accelerate(timeDelta);
         }
         this.applySpeedLimit();
-        this.pos_x += this.vel_x;
-        this.pos_y += this.vel_y;
+        this.pos_x += this.vel_x*(timeDelta/1000);
+        this.pos_y += this.vel_y*(timeDelta/1000);
 
 
     }

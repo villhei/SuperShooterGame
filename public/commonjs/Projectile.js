@@ -8,7 +8,7 @@
     function Projectile(position, launchVelocity) {
         this.position = position;
         this.velocity = launchVelocity || 15;
-        this.lifetime = 15;
+        this.lifetime = 500;
         this.alive = true;
         this.damage = 7;
         this.id = "";
@@ -27,9 +27,9 @@
         this.position.y = newValue;
     }
 
-    Projectile.prototype.move = function () {
-        this.position = this.position.add(this.velocity);
-        this.lifetime--;
+    Projectile.prototype.move = function (timeDelta) {
+        this.position = this.position.add(this.velocity.multiply(timeDelta/1000));
+        this.lifetime -= timeDelta;
         if(this.lifetime < 0) {
             this.alive = false;
         }

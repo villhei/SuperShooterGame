@@ -179,9 +179,7 @@ function onRemovePlayer(data) {
 function onServerStateUpdate(data) {
     serverGameState.ticks = data.ticks;
     GAME.state.sizeX = data.sizeX;
-    console.log("received x: " + data.sizeX);
     GAME.state.sizeY = data.sizeY;
-    console.log("received y: " + data.sizeY);
     updatePlayers();
     updateProjectiles();
     updateMissiles();
