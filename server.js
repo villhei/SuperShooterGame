@@ -15,14 +15,13 @@ Missile = require('./public/commonjs/Missile').Missile;
 var LOG_PING = false;
 
 var socket,
-    gameState,
     GAME,
-    gameTickCount,
     config;
 
 function init() {
 
     GAME = new Game();
+    GAME.serverInstance = true;
 
     config.init('gameconfig.json', function (resp) {
         if (resp != 0) {

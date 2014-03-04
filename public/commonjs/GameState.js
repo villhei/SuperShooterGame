@@ -10,14 +10,9 @@
         var entities = [];
         var projectiles = [];
         var missiles = [];
-        var scores =[];
-        var drawables = [];
-        var sizeX = 500;
-        var sizeY= 500;
-        var ticks = {
-            last_server: 0
-        }
-
+        var sizeX = 800;
+        var sizeY= 800;
+        var ticks = 0;
         function playerById(id) {
             var i;
             for (i = 0; i < players.length; i++) {
@@ -30,7 +25,6 @@
         return {
             players: players,
             entities: entities,
-            drawables: drawables,
             missiles: missiles,
             projectiles: projectiles,
             ticks: ticks,

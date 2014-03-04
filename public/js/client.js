@@ -4,7 +4,7 @@
 var canvas,			// Canvas DOM element
     ctx,			// Canvas rendering context
     keys,			// Keyboard input
-    gameState,      // The game state global
+    serverGameState,// The server game state global
     localPlayer,	// Local player
     window_active,  // is the window active
     socket;         // The socket
@@ -22,9 +22,11 @@ var canvas_width = 800;
 var canvas_height = 800;
 
 
-var CLIENT = {
-    state: {}
-}
+var GAME,
+    CLIENT
+        = {
+        state: {}
+    }
 
 /**************************************************
  ** Game INITIALISATION
@@ -38,18 +40,28 @@ function init() {
     canvas.height = canvas_height;
     window_active = true;
 
-    localPlayer = new Player();
+    localPlayer = new Player("LOCAL_DUMMY");
+
     // Initialise keyboard controls
     keys = new Keys();
 
-    socket = io.connect("http://localhost", {port: 8888, transports: ["websocket"]});
+    try {
+        socket = io.connect("http://localhost", {port: 8888, transports: ["websocket"]});
+    } catch (ex) {
+        console.log("Failed to instantiate Socket.IO ", ex.message);
+    }
+    serverGameState = new GameState();
 
-    gameState = new GameState();
+    GAME = new Game();
 
-    gameState.players.push(localPlayer);
+    GAME.state.players.push(localPlayer);
 
     // Start listening for events
     setEventHandlers();
+    GAME.run(function(gameState) {
+        // EMPTY
+    });
+
 };
 
 function setName() {
@@ -68,7 +80,7 @@ var setEventHandlers = function () {
     window.addEventListener("keyup", onKeyup, false);
 
     /*
-    This could be a better handling too. These leaves KeyDowns active when re-entry
+     This could be a better handling too. These leaves KeyDowns active when re-entry
      */
     window.onblur = function () {
         window_active = false;
@@ -82,16 +94,18 @@ var setEventHandlers = function () {
     // Window resize
     window.addEventListener("resize", onResize, false);
 
-    socket.on("connect", onSocketConnected);
-    socket.on("disconnect", onSocketDisconnect);
-    socket.on("new player", onNewPlayer);
-    socket.on("register client", onRegisterClient);
-    socket.on("remove player", onRemovePlayer);
-    socket.on("state update", onGameStateUpdate);
+    if (socket) {
+        socket.on("connect", onSocketConnected);
+        socket.on("disconnect", onSocketDisconnect);
+        socket.on("new player", onNewPlayer);
+        socket.on("register client", onRegisterClient);
+        socket.on("remove player", onRemovePlayer);
+        socket.on("state update", onServerStateUpdate);
 
-    socket.on('ping', function () {
-        socket.emit('pong');
-    });
+        socket.on('ping', function () {
+            socket.emit('pong');
+        });
+    }
 };
 
 // Keyboard key down
@@ -119,6 +133,7 @@ function onResize(e) {
 
 function onSocketConnected() {
     console.log("Connected to socket server");
+
     socket.emit("new player", {name: "WebClient"});
 };
 
@@ -128,8 +143,11 @@ function onSocketDisconnect() {
 
 
 function onRegisterClient(data) {
+    localPlayer = new Player(data.id);
     localPlayer.ship.setX(data.x);
     localPlayer.ship.setY(data.y);
+
+    console.log("Registered remote id: " + data.id);
     localPlayer.id = data.id;
     localPlayer.setName(data.name);
 
@@ -139,26 +157,30 @@ function onNewPlayer(data) {
     newPlayer.id = data.id;
 
     console.log("New player connected: " + newPlayer);
-    gameState.players.push(newPlayer);
+    serverGameState.players.push(newPlayer);
+    GAME.state.players.push(newPlayer);
 };
 
 
 function onRemovePlayer(data) {
-    var removePlayer = gameState.playerById(data.id);
+    var removePlayer = serverGameState.playerById(data.id);
 
     if (!removePlayer) {
-        console.log("Player not found: " + data.id);
+        console.log("Player not found for removal: " + data.id);
         return;
     }
     ;
     console.log("removing: " + data.id);
     console.log(removePlayer);
-    gameState.players.splice(gameState.players.indexOf(removePlayer), 1);
-
+    serverGameState.players.splice(serverGameState.players.indexOf(removePlayer), 1);
+    GAME.state.players.splice(serverGameState.players.indexOf(removePlayer), 1);
 };
 
-function onGameStateUpdate(data) {
-    gameState.ticks.last_server = data.tick;
+function onServerStateUpdate(data) {
+    console.log(data.ticks);
+    serverGameState.ticks = data.ticks;
+    GAME.state.sizeX = data.sizeX;
+    GAME.state.sizeY = data.sizeY;
 
     updatePlayers();
     updateProjectiles();
@@ -166,27 +188,32 @@ function onGameStateUpdate(data) {
     updateScores();
 
     function updateProjectiles() {
-        gameState.projectiles = [];
+        serverGameState.projectiles = [];
         for (var i = 0; i < data.projectiles.length; ++i) {
             var rp = data.projectiles[i];
             var projectile = new Projectile(new Vector(rp.x, rp.y), new Vector(rp.vel_x, rp.vel_y))
-            gameState.projectiles.push(projectile);
+            serverGameState.projectiles.push(projectile);
         }
     }
 
     function updateMissiles() {
-        gameState.missiles = [];
+        serverGameState.missiles = [];
 
         data.missiles.forEach(function (missile) {
             var newMissile = new Missile(new Vector(missile.x, missile.y), new Vector(missile.vel_x, missile.vel_y), missile.angle);
-            gameState.missiles.push(newMissile);
+            serverGameState.missiles.push(newMissile);
         })
     }
 
     function updatePlayers() {
+
         for (var i = 0; i < data.players.length; ++i) {
+
             var playerInfo = data.players[i];
-            var player = gameState.playerById(playerInfo.id);
+            if (playerInfo.id == localPlayer.id) {
+                localPlayer.setJSON(playerInfo);
+            }
+            var player = serverGameState.playerById(playerInfo.id);
             if (player) {
                 player.setJSON(playerInfo);
             }
@@ -194,15 +221,18 @@ function onGameStateUpdate(data) {
     }
 
     function updateScores() {
-        gameState.scores = [];
+        serverGameState.scores = [];
         data.scores.forEach(function (score) {
-            gameState.scores.push(score);
+            serverGameState.scores.push(score);
         });
-        gameState.scores.sort(function(a, b) {
+        serverGameState.scores.sort(function (a, b) {
             return b.score - a.score;
         })
     }
 
+    GAME.state.players = serverGameState.players;
+    GAME.state.missiles = serverGameState.missiles;
+    GAME.state.projectiles = serverGameState.projectiles;
 }
 
 
@@ -220,24 +250,28 @@ function runGame() {
     window.setInterval(update, 1000 / 30);
 }
 
-
 /**************************************************
  ** Game UPDATE
  **************************************************/
 function update() {
 
-    var payload;
+    var movementData;
     if (localPlayer) {
-        payload = updateClientInput(keys);
-        socket.emit("update player", payload);
+        movementData = updateClientInput(keys);
+        if (socket) {
+            socket.emit("update player", movementData);
+        }
+
+        GAME.updateInput(localPlayer, movementData);
+
     }
 
 };
 
 function updateClientInput(keys) {
 
-    if(!window_active) {
-        return {nothing:true};
+    if (!window_active) {
+        return {nothing: true};
     }
 
     var vertical_accel = 0,
@@ -305,16 +339,16 @@ function draw() {
     fillBackGround(ctx, "#000");
 
     var i;
-    for (i = 0; i < gameState.players.length; i++) {
-        var player = gameState.players[i];
+    for (i = 0; i < GAME.state.players.length; i++) {
+        var player = GAME.state.players[i];
         drawPlayer(ctx, player);
     }
+    drawPlayer(ctx, localPlayer);
 
-    gameState.projectiles.forEach(function (projectile) {
+    GAME.state.projectiles.forEach(function (projectile) {
         drawProjectile(ctx, projectile);
     })
-    gameState.missiles.forEach(function (missile) {
-        console.log(missile);
+    GAME.state.missiles.forEach(function (missile) {
         drawMissile(ctx, missile);
     })
 
@@ -438,7 +472,6 @@ function draw() {
     }
 
     function drawMissile(ctx, missile) {
-        console.log(missile);
         var color = '#fff'
         var left = missile.getLeft();
         var right = missile.getRight();
@@ -455,7 +488,7 @@ function draw() {
 
     function drawDebugData() {
         var boxwidth = 200;
-        var boxheight = 50;
+        var boxheight = 70;
 
         var box_x = (canvas.width - boxwidth) / 2;
         var box_y = 0;
@@ -465,18 +498,20 @@ function draw() {
         ctx.fillStyle = 'rgba(255, 255, 255, 0.2)'
         ctx.fillRect(box_x, box_y, boxwidth, boxheight);
 
-        var text = 'Game tick: ' + gameState.ticks.last_server;
+        var text = 'Game tick: ' + serverGameState.ticks;
         drawText(ctx, text, box_x + padding, box_y + 15);
+        var text1 = 'Local tick: ' + GAME.state.ticks;
+        drawText(ctx, text1, box_x + padding, box_y + 30);
         var text2 = 'Ping: ' + localPlayer.getPing() + " ms";
-        drawText(ctx, text2, box_x + padding, box_y + 30);
+        drawText(ctx, text2, box_x + padding, box_y + 45);
         var text3 = 'Score: ' + localPlayer.score;
 
-        drawText(ctx, text3, box_x + padding, box_y + 45);
+        drawText(ctx, text3, box_x + padding, box_y + 60);
     }
 
     function drawScores() {
         var boxwidth = 200;
-        var boxheight = gameState.players.length*20;
+        var boxheight = GAME.state.players.length * 20;
 
         var box_x = (canvas.width - boxwidth);
         var box_y = 0;
@@ -486,10 +521,10 @@ function draw() {
 
         ctx.fillStyle = 'rgba(255, 255, 255, 0.2)'
         ctx.fillRect(box_x, box_y, boxwidth, boxheight);
-        if (gameState.scores) {
-            gameState.scores.forEach(function (score, index) {
+        if (serverGameState.scores) {
+            serverGameState.scores.forEach(function (score, index) {
                 var text = score.name + " : " + score.score;
-                drawText(ctx, text, box_x + padding, box_y + (index*rowsize + rowsize));
+                drawText(ctx, text, box_x + padding, box_y + (index * rowsize + rowsize));
             })
         }
     }

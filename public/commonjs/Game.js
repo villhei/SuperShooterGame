@@ -2,8 +2,6 @@
 
     exports.Game = Game;
 
-    var util = require("util");
-
     function Game() {
         this.area = {
             sizeX: 800,
@@ -27,10 +25,10 @@
         }
         this.max_speed = 15;
         this.respawnTime = 1000;
-        this.tickCount = 0;
         this.state = new GameState();
         this.updatesPerSecond = 30;
         this.gameRunner;
+        this.serverInstance = false;
         this.max_idle_time = 60 * 1000;
     }
 
@@ -44,12 +42,7 @@
         return true;
     }
 
-    Game.prototype.updatePlayerInput = function (playerId, movementData) {
-
-        var targetPlayer = this.state.playerById(playerId);
-        if (!targetPlayer) {
-            return false;
-        }
+    Game.prototype.updateInput = function (targetPlayer, movementData) {
         if (movementData.accel_x < 0) {
             targetPlayer.ship.turnLeft();
         } else if (movementData.accel_x > 0) {
@@ -81,14 +74,23 @@
         return true;
     }
 
+    Game.prototype.updatePlayerInput = function (playerId, movementData) {
+
+        var targetPlayer = this.state.playerById(playerId);
+        if (!targetPlayer) {
+            return false;
+        }
+        this.updateInput(targetPlayer, movementData);
+        return true;
+    }
+
     Game.prototype.respawnShip = function (player) {
-        var startX = Math.round(Math.random() * (this.area.sizeX)),
-            startY = Math.round(Math.random() * (this.area.sizeY));
-        player.ship = new Ship(startX, startY, player.id);
+            var startX = Math.round(Math.random() * (this.area.sizeX)),
+                startY = Math.round(Math.random() * (this.area.sizeY));
+            player.ship = new Ship(startX, startY, player.id);
     }
 
     Game.prototype.runGameCycle = function () {
-
         this.updateBallistics();
         this.updatePlayers();
     }
@@ -135,10 +137,10 @@
                         this.state.missiles.push(missile);
                     }
                 }
-            } else {
+            } else if (this.serverInstance) {
                 var timeNow = new Date().getTime();
                 if (player.ship.deathTime + this.respawnTime <= timeNow) {
-                    util.log("Respawning player " + player);
+                    console.log("Respawning player " + player);
                     this.respawnShip(player);
                 }
             }
@@ -152,15 +154,15 @@
             if (projectile.position.distance(player.ship.getPosition()) <= player.ship.size) {
                 if (player.id != projectile.id && player.ship.alive) {
                     player.ship.health -= projectile.damage;
-                    if (player.ship.health < 0) {
+                    if (player.ship.health < 0 && game.serverInstance) {
                         player.ship.alive = false;
                         player.ship.deathTime = new Date().getTime();
                         var killer = game.state.playerById(projectile.id);
                         if (killer) {
-                            util.log(killer + " killed " + player.getName() + ", new score: " + killer.score);
+                            console.log(killer + " killed " + player.getName() + ", new score: " + killer.score);
                             killer.score++;
                         } else {
-                            util.log(player.getName() + " died because of an unknown reason");
+                            console.log(player.getName() + " died because of an unknown reason");
                         }
 
                     }
@@ -195,8 +197,6 @@
 
     }
 
-
-
     Game.prototype.checkAreaBounds = function (movableEntity) {
 
         var me = movableEntity;
@@ -217,20 +217,21 @@
 
     Game.prototype.run = function (gameStateUpdater) {
         var game = this;
+        game.state.ticks = 0;
         this.gameRunner = setInterval(function () {
-            game.tickCount++;
+            game.state.ticks = game.state.ticks+1;
             game.runGameCycle();
 
             gameStateUpdater(game.packGameData());
         }, 1000 / this.updatesPerSecond);
     }
 
-
     Game.prototype.packGameData = function () {
         var players = [];
         var projectiles = [];
         var missiles = [];
         var scores = [];
+        var tickCount = this.state.ticks;
 
         var i;
         for (i = 0; i < this.state.players.length; ++i) {
@@ -248,9 +249,9 @@
             missiles.push(missile.toJSON());
         })
         return {
-            tick: this.tickCount,
             players: players,
             scores: scores,
+            ticks: tickCount,
             missiles: missiles,
             projectiles: projectiles
         }
