@@ -152,7 +152,7 @@ function onRegisterClient(data) {
 }
 function onNewPlayer(data) {
     var newPlayer = new Player(data.id, data.x, data.y);
-    newPlayer.id = data.id;
+    newPlayer.setJSON(data);
 
     console.log("New player connected: " + newPlayer);
     GAME.state.players.push(newPlayer);
