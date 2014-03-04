@@ -139,7 +139,7 @@ function onSocketDisconnect() {
 
 
 function onRegisterClient(data) {
-    GAME.state.players = GAME.state.players.splice(1,1);
+    GAME.state.players = GAME.state.players.splice(1, 1);
     localPlayer = new Player(data.id);
     localPlayer.ship.setX(data.x);
     localPlayer.ship.setY(data.y);
@@ -194,7 +194,6 @@ function update() {
 
 };
 
-
 var lastClientUpdate = 0;
 var lastPing = 0;
 function onServerStateUpdate(data) {
@@ -231,7 +230,8 @@ function onServerStateUpdate(data) {
             if (playerInfo.id == localPlayer.id) {
                 localPlayer.setJSON(playerInfo);
                 lastClientUpdate = playerInfo.lastReceivedUpdate;
-                lastPing = playerInfo.ping;            }
+                lastPing = playerInfo.ping;
+            }
             var player = GAME.state.playerById(playerInfo.id);
             if (player) {
                 player.setJSON(playerInfo);
