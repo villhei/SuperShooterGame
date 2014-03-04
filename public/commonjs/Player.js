@@ -8,6 +8,7 @@
         this.ship = new Ship(0,0);
         this.score = 0;
         this.ping = 0;
+        this.lastReceivedUpdate = 0;
 
     }
 
@@ -72,6 +73,7 @@
         this.ship.alive = newValues.ship.alive;
         this.ship.vel_x = newValues.ship.vel_x;
         this.ship.vel_y = newValues.ship.vel_y;
+        this.ship.angle = newValues.ship.angle;
         this.ship.accelerating = newValues.ship.accelerating;
         this.ship.afterburner = newValues.ship.afterburner;
 
@@ -83,12 +85,14 @@
             y: this.ship.getY(),
             id: this.id,
             name: this.name,
+            lastReceivedUpdate: this.lastReceivedUpdate,
             score: this.score,
             ping: this.ping,
             ship: {
                 x: this.ship.getX(),
                 y: this.ship.getY(),
                 health: this.ship.health,
+                lastReceivedUpdate: this.lastReceivedUpdate,
                 alive: this.ship.alive,
                 angle: this.ship.angle,
                 accelerating: this.ship.accelerating,

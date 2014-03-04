@@ -31,40 +31,52 @@
         var removePlayer = this.state.playerById(playerId);
         if (removePlayer === undefined) {
             return false;
-        }
-        ;
+        };
         this.state.players.splice(this.state.players.indexOf(removePlayer), 1);
         return true;
     }
 
-    Game.prototype.updateInput = function (targetPlayer, movementData) {
+    Game.prototype.updateInput = function (player, movementData) {
+
+        player.lastReceivedUpdate = movementData.packageNum;
+
         if (movementData.accel_x < 0) {
-            targetPlayer.ship.turnLeft();
+            player.ship.turnLeft();
         } else if (movementData.accel_x > 0) {
-            targetPlayer.ship.turnRight();
+            player.ship.turnRight();
         }
         if (movementData.accel_y == 1) {
-            targetPlayer.ship.accelerating = true;
+            player.ship.accelerating = true;
+            player.ship.accelerate();
         } else {
-            targetPlayer.ship.accelerating = false;
+            player.ship.accelerating = false;
         }
 
         if (movementData.firing) {
-            targetPlayer.ship.firing_primary = true;
+            player.ship.firing_primary = true;
+            var bullet = this.fireWeapon(player.ship, player.ship.cannon, Projectile);
+            if (bullet) {
+                this.state.projectiles.push(bullet);
+            }
         } else {
-            targetPlayer.ship.firing_primary = false;
+            player.ship.firing_primary = false;
         }
 
         if (movementData.firing_secondary) {
-            targetPlayer.ship.firing_secondary = true;
+            player.ship.firing_secondary = true;
+            var missile = this.fireWeapon(player.ship, player.ship.missile, Missile);
+            if (missile) {
+                missile.setTrackTraget(this.state.players);
+                this.state.missiles.push(missile);
+            }
         } else {
-            targetPlayer.ship.firing_secondary = false;
+            player.ship.firing_secondary = false;
         }
 
         if (movementData.afterburner) {
-            targetPlayer.ship.afterburner = true;
+            player.ship.afterburner = true;
         } else {
-            targetPlayer.ship.afterburner = false;
+            player.ship.afterburner = false;
         }
         return true;
     }
@@ -120,17 +132,10 @@
                 player.ship.update(timeDelta);
                 this.checkAreaBounds(player.ship);
                 if (player.ship.firing_primary) {
-                    var bullet = this.fireWeapon(player.ship, player.ship.cannon, Projectile);
-                    if (bullet) {
-                        this.state.projectiles.push(bullet);
-                    }
+
                 }
                 if (player.ship.firing_secondary) {
-                    var missile = this.fireWeapon(player.ship, player.ship.missile, Missile);
-                    if (missile) {
-                        missile.setTrackTraget(this.state.players);
-                        this.state.missiles.push(missile);
-                    }
+
                 }
             } else if (this.serverInstance) {
                 var timeNow = new Date().getTime();
@@ -209,11 +214,7 @@
                 me.setY(0);
             }
         } catch (ex) {
-            console.log("area size: ", this.state.sizeX);
-            console.log("area size: ", this.state.sizeY);
-            console.log("Error with something: ", ex);
-            console.log("Error with something: ", me);
-
+            console.log("Error with something area bounds: ", ex);
         }
     }
 

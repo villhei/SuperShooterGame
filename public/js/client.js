@@ -22,11 +22,7 @@ var canvas_width = 800;
 var canvas_height = 800;
 
 
-var GAME,
-    CLIENT
-        = {
-        state: {}
-    }
+var GAME;
 
 /**************************************************
  ** Game INITIALISATION
@@ -46,7 +42,7 @@ function init() {
     keys = new Keys();
 
     try {
-        socket = io.connect("http://localhost", {port: 8888, transports: ["websocket"]});
+        socket = io.connect("http://ssg.plop.fi", {port: 8888, transports: ["websocket"]});
     } catch (ex) {
         console.log("Failed to instantiate Socket.IO ", ex.message);
     }
@@ -58,7 +54,7 @@ function init() {
 
     // Start listening for events
     setEventHandlers();
-    GAME.run(function(gameState) {
+    GAME.run(function (gameState) {
         // EMPTY
     });
 
@@ -176,6 +172,31 @@ function onRemovePlayer(data) {
     GAME.state.players.splice(serverGameState.players.indexOf(removePlayer), 1);
 };
 
+
+/**************************************************
+ ** Game UPDATE
+ **************************************************/
+var update_seq = 0;
+var inputHistory = [];
+function update() {
+
+    var movementData;
+    if (localPlayer) {
+        movementData = updateClientInput(keys);
+        if (socket) {
+            movementData.packageNum = update_seq++;
+            socket.emit("update player", movementData);
+        }
+        movementData.timeStamp = new Date().getTime();
+        inputHistory.push(movementData);
+        GAME.updateInput(localPlayer, movementData);
+
+    }
+
+};
+
+
+var lastClientUpdate = 0;
 function onServerStateUpdate(data) {
     serverGameState.ticks = data.ticks;
     GAME.state.sizeX = data.sizeX;
@@ -210,6 +231,7 @@ function onServerStateUpdate(data) {
             var playerInfo = data.players[i];
             if (playerInfo.id == localPlayer.id) {
                 localPlayer.setJSON(playerInfo);
+                lastClientUpdate = playerInfo.lastReceivedUpdate;
             }
             var player = serverGameState.playerById(playerInfo.id);
             if (player) {
@@ -231,40 +253,31 @@ function onServerStateUpdate(data) {
     GAME.state.players = serverGameState.players;
     GAME.state.missiles = serverGameState.missiles;
     GAME.state.projectiles = serverGameState.projectiles;
-}
 
-
-/**************************************************
- ** Game ANIMATION LOOP
- **************************************************/
-function animate() {
-    draw();
-    // Request a new animation frame using Paul Irish's shim
-    window.requestAnimFrame(animate);
-};
-
-
-function runGame() {
-    window.setInterval(update, 1000 / 30);
-}
-
-/**************************************************
- ** Game UPDATE
- **************************************************/
-function update() {
-
-    var movementData;
-    if (localPlayer) {
-        movementData = updateClientInput(keys);
-        if (socket) {
-            socket.emit("update player", movementData);
+    inputHistory = inputHistory.filter(function (element) {
+        return element.packageNum >= lastClientUpdate;
+    })
+    var i = 0;
+    var firstFrame = 0;
+    inputHistory.forEach(function (element) {
+        if(i == 0) {
+            firstFrame = element.timeStamp;
         }
-
-        GAME.updateInput(localPlayer, movementData);
-
+        i++
+        GAME.updateInput(localPlayer, element);
+    })
+    if (i > 0) {
+        var timeNow = new Date().getTime();
+        GAME.runGameCycle(timeNow -firstFrame);
     }
 
-};
+
+    /** This code works
+     *
+
+
+     **/
+}
 
 function updateClientInput(keys) {
 
@@ -316,9 +329,34 @@ function updateClientInput(keys) {
 
 
 /**************************************************
+ ** Game ANIMATION LOOP
+ **************************************************/
+
+var lastUpdate = 0;
+var MAX_FPS = 60;
+var lastFrame = null;
+function animate() {
+    if (lastFrame == null) {
+        lastFrame = new Date().getTime();
+    }
+    var timeNow = new Date().getTime();
+    draw(timeNow - lastFrame);
+    lastFrame = new Date().getTime();
+
+    // Request a new animation frame using Paul Irish's shim
+    window.requestAnimFrame(animate);
+};
+
+
+function runGame() {
+    window.setInterval(update, 1000 / 30);
+}
+
+
+/**************************************************
  ** Game DRAW
  **************************************************/
-function draw() {
+function draw(frameTime) {
 
     var object_border_color = '#E9F2F7'
     var thrust_color = 'rgba(3, 196, 255, 0.2)';
@@ -384,8 +422,7 @@ function draw() {
         if (ship.accelerating) {
             var position = ship.getThrustPosition();
             if (ship.afterburner) {
-                var velocity = ship.getVelocity();
-                var blob = new Vector(position.x - velocity.x, position.y - velocity.y);
+                var blob = ship.getThrustPosition();
                 blob.color = afterburner_color;
             } else {
                 var blob = new Vector(position.x, position.y);
@@ -398,7 +435,7 @@ function draw() {
         ship.thrust = ship.thrust.filter(function (element) {
             return element.lifeTime > 0
         });
-        var multiplier = 0.2;
+        var multiplier = 0.1;
         ship.thrust.forEach(function (thrust) {
             thrust.lifeTime--;
             ctx.beginPath();
@@ -458,7 +495,7 @@ function draw() {
 
     function drawProjectile(ctx, projectile) {
         var position = projectile.position;
-        var projectile_size = 2;
+        var projectile_size = 1;
         var projectile_color = '#fff'
         var oldStyle = ctx.fillStyle;
         ctx.beginPath();

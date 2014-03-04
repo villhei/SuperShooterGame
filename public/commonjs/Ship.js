@@ -6,12 +6,12 @@
         this.pos_x = pos_x || 0;
         this.pos_y = pos_y || 0;
         this.MAX_SPEED = 1500;
-        this.accelspeed = 200;
+        this.accelspeed = 10;
         this.afterburnerMultiplier = 3;
         this.angle = 0.0;
         this.size = 15;
         this.id = id;
-        this.turningspeed = 5;
+        this.turningspeed = 7;
         this.vel_x = 0;
         this.vel_y = 0;
         this.alive = true;
@@ -118,18 +118,13 @@
     };
 
 
-    Ship.prototype.accelerate = function (timeDelta) {
+    Ship.prototype.accelerate = function () {
         var multiplier = this.afterburner ? this.afterburnerMultiplier : 1;
-        multiplier *= timeDelta/1000;
-
         this.vel_x += Math.cos(this.angle * (Math.PI / 180)) * this.accelspeed * multiplier;
         this.vel_y += Math.sin(this.angle * (Math.PI / 180)) * this.accelspeed * multiplier;
     };
 
     Ship.prototype.update = function (timeDelta) {
-        if (this.accelerating) {
-            this.accelerate(timeDelta);
-        }
         this.applySpeedLimit();
         this.pos_x += this.vel_x*(timeDelta/1000);
         this.pos_y += this.vel_y*(timeDelta/1000);
