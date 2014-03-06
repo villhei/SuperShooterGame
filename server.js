@@ -39,16 +39,7 @@ function init() {
             sizeY: config.sizeY || 600
         }
 
-        GAME.cannon.velocity = config.cannon.velocity;
-        GAME.cannon.fireDelay = config.cannon.fireDelay;
-        GAME.cannon.reloadDelay = config.cannon.reloadDelay;
-        GAME.missile.velocity = config.missile.velocity;
-        GAME.missile.fireDelay = config.missile.fireDelay;
-
-        GAME.respawnTime = config.respawnTime || 1000;
-        GAME.updatesPerSecond = config.updatesPerSecond;
-        GAME.max_speed = config.max_speed;
-        GAME.max_idle_time = config.max_idle_time;
+        GAME.updatesPerSecond = 15;
     });
 
     /*

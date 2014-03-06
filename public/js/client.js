@@ -274,18 +274,18 @@ function onServerStateUpdate(data) {
     GAME.state.projectiles = serverGameState.projectiles;
     GAME.state.asteroids = serverGameState.asteroids;
 
-    /**  inputHistory = inputHistory.filter(function (element) {
+    inputHistory = inputHistory.filter(function (element) {
         return element.packageNum >= lastClientUpdate;
     })
-     var i = 0;
-     var firstFrame = 0;
-     inputHistory.forEach(function (element) {
+    var i = 0;
+    var firstFrame = 0;
+    inputHistory.forEach(function (element) {
         if (i == 0) {
             firstFrame = element.timeStamp;
         }
         i++
         GAME.updateInput(localPlayer, element);
-    })**/
+    })
 }
 
 function updateClientInput(keys) {
@@ -348,7 +348,7 @@ function animate() {
     }
     var timeNow = new Date().getTime();
     if (GAME) {
-        GAME.clientRunner((timeNow-lastFrame)-lastPing/2);
+        GAME.clientRunner((timeNow - lastFrame) - lastPing / 2);
     }
     draw(timeNow - lastFrame);
     lastFrame = new Date().getTime();
@@ -384,7 +384,13 @@ function draw(frameTime) {
         drawPlayer(ctx, player, 0.8);
     }
 
-
+    if (drawServerState = false) {
+        var i;
+        for (i = 0; i < serverGameState.players.length; i++) {
+            var player = serverGameState.players[i];
+            drawPlayer(ctx, player, 0.2);
+        }
+    }
 
 
     GAME.state.projectiles.forEach(function (projectile) {

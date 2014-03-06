@@ -5,7 +5,7 @@
     function Player(sessionId) {
         this.id = sessionId;
         this.name;
-        this.ship = new Ship(0,0);
+        this.ship = new Ship(0, 0);
         this.score = 0;
         this.ping = 0;
         this.lastReceivedUpdate = 0;
@@ -43,10 +43,10 @@
     /**
      *  FIXME
      */
-    Player.prototype.getPosition = function() {
+    Player.prototype.getPosition = function () {
         return this.ship.getPosition();
     }
-    Player.prototype.getVelocity = function() {
+    Player.prototype.getVelocity = function () {
         return this.ship.getVelocity();
     }
 
@@ -62,6 +62,9 @@
     Player.prototype.setJSON = function (newValues) {
         this.ship.position.setValue(newValues.ship.position);
         this.ship.velocity.setValue(newValues.ship.velocity);
+        //this.ship.velocity = this.ship.velocity.lerp(new Vector(newValues.ship.velocity.x, newValues.ship.velocity.y), 0.9);
+        //  this.ship.position = this.ship.position.lerp(new Vector(newValues.ship.position.x, newValues.ship.position.y), 0.9);
+
         this.id = newValues.id;
         this.name = newValues.name;
 

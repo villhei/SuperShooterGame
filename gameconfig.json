@@ -2,7 +2,7 @@
     "sizeX" : 800,
     "sizeY" : 800,
     "respawnTime": 2000,
-    "updatesPerSecond": 60,
+    "updatesPerSecond": 20,
     "max_velocity": 30,
     "max_idle_time": 120000,
     "cannon" : {

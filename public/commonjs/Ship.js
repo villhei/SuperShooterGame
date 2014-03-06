@@ -11,7 +11,7 @@
         this.size = 15;
         this.radius = 15;
         this.id = id;
-        this.turningspeed = 180;
+        this.turningspeed = 270;
         this.velocity = new Vector(0, 0);
         this.alive = true;
         this.health = 100;
@@ -19,6 +19,9 @@
         this.firing_primary = false;
         this.firing_secondary = false;
         this.accelerationStart = 0;
+        this.turnRightStart = 0;
+        this.turnLeftStart = 0;
+        this.accelspeed = 120;
         this.missile = {
             fireDelay: 200,
             lastFire: 0,
@@ -102,8 +105,35 @@
         return new Vector(x + this.position.x, y + this.position.y);
     };
 
-    Ship.prototype.startAcceleration = function () {
-        this.accelerationStart = new Date().getTime();
+    Ship.prototype.startAcceleration = function (latency) {
+        if (this.accelerationStart == 0) {
+            this.accelerationStart = this.resetClock(latency);
+        }
+    }
+
+    Ship.prototype.startTurningLeft = function (latency) {
+        if (this.turnLeftStart == 0) {
+            this.turnLeftStart = this.resetClock(latency);
+        }
+    }
+
+
+    Ship.prototype.startTurningRight = function (latency) {
+        if (this.turnRightStart == 0) {
+            this.turnRightStart = this.resetClock(latency);
+        }
+    }
+    Ship.prototype.stopTurningRight = function () {
+        this.turnRightStart = 0;
+    }
+
+    Ship.prototype.stopTurningLeft = function () {
+        this.turnLeftStart = 0;
+    }
+
+
+    Ship.prototype.resetClock = function (latency) {
+        return new Date().getTime();
     }
 
     Ship.prototype.stopAcceleration = function () {
@@ -113,12 +143,11 @@
     Ship.prototype.accelerate = function () {
         var multiplier = this.afterburner ? this.afterburnerMultiplier : 1;
 
-        this.accelspeed = 30;
-
-        var accelTime = (new Date().getTime() - this.accelerationStart)/1000;
+        var accelTime = (new Date().getTime() - this.accelerationStart) / 1000;
         this.velocity.x += Math.cos(this.angle * (Math.PI / 180)) * this.accelspeed * accelTime * multiplier;
         this.velocity.y += Math.sin(this.angle * (Math.PI / 180)) * this.accelspeed * accelTime * multiplier;
-        this.startAcceleration();
+
+        this.accelerationStart = this.resetClock(0);
     };
 
     Ship.prototype.update = function (timeDelta) {
@@ -126,28 +155,41 @@
         if (this.accelerationStart != 0) {
             this.accelerate();
         }
-        this.position = this.position.add(this.velocity.multiply(timeDelta/1000));
+        if (this.turningLeft != 0 && this.turningLeft) {
+            this.turnLeft();
+        } else if (this.turningRight != 0 && this.turningRight) {
+            this.turnRight();
+        }
+
+        this.position = this.position.add(this.velocity.multiply(timeDelta / 1000));
 
     }
+
 
     Ship.prototype.applySpeedLimit = function () {
     }
 
 
-    Ship.prototype.turnRight = function (timeDelta) {
+    Ship.prototype.turnRight = function () {
+        var accelTime = (new Date().getTime() - this.turnRightStart) / 1000;
+
         var multiplier = this.afterburner && this.accelerating ? this.afterburnerMultiplier : 1;
-        this.angle += this.turningspeed * timeDelta / 1000 / multiplier;
+        this.angle += this.turningspeed * accelTime / multiplier;
         if (this.angle > 360) {
             this.angle -= 360;
         }
+        this.turnRightStart = this.resetClock(0);
     }
 
-    Ship.prototype.turnLeft = function (timeDelta) {
+    Ship.prototype.turnLeft = function () {
+        var accelTime = (new Date().getTime() - this.turnLeftStart) / 1000;
         var multiplier = this.afterburner && this.accelerating ? this.afterburnerMultiplier : 1;
-        this.angle -= this.turningspeed * timeDelta / 1000 / multiplier;
+        this.angle -= this.turningspeed * accelTime / multiplier;
         if (this.angle < 0) {
             this.angle += 360;
-        }
-    }
 
+        }
+        this.turnLeftStart = this.resetClock(0);
+
+    }
 })(typeof exports === 'undefined' ? this['Ship'] = {} : exports);

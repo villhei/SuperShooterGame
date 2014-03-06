@@ -42,21 +42,40 @@
 
         if (movementData.accel_x < 0) {
             player.ship.turningLeft = true;
+            if (this.serverInstance && player.ping > 0) {
+                player.ship.startTurningLeft(player.ping/2);
+            } else {
+                player.ship.startTurningLeft();
+            }
         } else {
             player.ship.turningLeft = false;
+            player.ship.stopTurningLeft();
         }
 
         if (movementData.accel_x > 0) {
             player.ship.turningRight = true;
+            if (this.serverInstance && player.ping > 0) {
+                player.ship.startTurningRight(player.ping/2);
+            } else {
+                player.ship.startTurningRight();
+            }
         } else {
             player.ship.turningRight = false;
+            player.ship.stopTurningRight();
         }
 
         if (movementData.accel_y == 1) {
             player.ship.accelerating = true;
+            if (this.serverInstance && player.ping > 0) {
+                player.ship.startAcceleration(player.ping/2);
+            } else {
+                player.ship.startAcceleration();
+            }
 
         } else {
             player.ship.accelerating = false;
+            player.ship.stopAcceleration();
+
         }
 
         if (movementData.firing) {
@@ -81,15 +100,11 @@
 
     Game.prototype.updateShip = function (ship, timeDelta) {
         if (ship.accelerating) {
-            ship.startAcceleration();
         } else {
-            ship.stopAcceleration();
         }
         if (ship.turningLeft) {
-            ship.turnLeft(timeDelta);
         }
         if (ship.turningRight) {
-            ship.turnRight(timeDelta);
         }
 
         if (ship.firing_primary) {
@@ -286,7 +301,7 @@
         }
     }
 
-    Game.prototype.clientRunner = function(deltaTime) {
+    Game.prototype.clientRunner = function (deltaTime) {
         this.state.ticks++;
         this.runGameCycle(deltaTime);
     }
