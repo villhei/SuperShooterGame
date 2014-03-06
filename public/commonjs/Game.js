@@ -80,16 +80,15 @@
         return true;
     }
 
-    Game.prototype.updateShip = function (ship) {
-
+    Game.prototype.updateShip = function (ship, timeDelta) {
         if (ship.accelerating) {
-            ship.accelerate();
+            ship.accelerate(timeDelta);
         }
         if (ship.turningLeft) {
-            ship.turnLeft();
+            ship.turnLeft(timeDelta);
         }
         if (ship.turningRight) {
-            ship.turnRight();
+            ship.turnRight(timeDelta);
         }
 
         if (ship.firing_primary) {
@@ -195,8 +194,9 @@
 
                 player.ship.regenerate(timeDelta);
                 player.ship.update(timeDelta);
-                this.updateShip(player.ship);
+                this.updateShip(player.ship, timeDelta);
                 this.checkAreaBounds(player.ship);
+
             } else if (this.serverInstance) {
                 var timeNow = new Date().getTime();
                 if (player.ship.deathTime + this.respawnTime <= timeNow) {
@@ -253,8 +253,8 @@
 
         weapon.clipContent--; // Deduct a shot
         var projectileVelocity = weapon.velocity; // Weapon-specific launch velocity
-        var launch_vel_x = we.vel_x + (Math.cos(we.angle * Math.PI / 180) * projectileVelocity); // Take direction from velocity, multiply with projetilespeed
-        var launch_vel_y = we.vel_y + (Math.sin(we.angle * Math.PI / 180) * projectileVelocity);
+        var launch_vel_x = we.velocity.x + (Math.cos(we.angle * Math.PI / 180) * projectileVelocity); // Take direction from velocity, multiply with projetilespeed
+        var launch_vel_y = we.velocity.y + (Math.sin(we.angle * Math.PI / 180) * projectileVelocity);
 
         weapon.lastFire = new Date().getTime(); // Register time
         var projectile = new TypeFired(weaponizedEntity.getWeaponPosition(), new Vector(launch_vel_x, launch_vel_y), we.angle);
@@ -288,19 +288,18 @@
     Game.prototype.run = function (gameStateUpdater) {
         var game = this;
         game.state.ticks = 0;
-        var lastUpdate = 0;
+        var lastUpdate = new Date().getTime();
         var updateDelay = 1000 / this.updatesPerSecond;
 
         this.gameRunner = setInterval(function () {
             var beforeFrame = new Date().getTime();
-            if (lastUpdate + updateDelay <= beforeFrame) {
+            var measuredUpdateDelay = beforeFrame - lastUpdate;
+            game.state.ticks++;
+            game.runGameCycle(measuredUpdateDelay);
+            gameStateUpdater(game.packGameData());
 
-                game.state.ticks++;
-                game.runGameCycle(beforeFrame - lastUpdate);
-                gameStateUpdater(game.packGameData());
-                var afterFrame = new Date().getTime();
-                lastUpdate = afterFrame;
-            }
+            lastUpdate = new Date().getTime();
+
         }, updateDelay);
     }
 

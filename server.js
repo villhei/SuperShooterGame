@@ -46,7 +46,7 @@ function init() {
         GAME.missile.fireDelay = config.missile.fireDelay;
 
         GAME.respawnTime = config.respawnTime || 1000;
-        GAME.updatesPerSecond = config.updatesPerSecond;
+      GAME.updatesPerSecond = config.updatesPerSecond;
         GAME.max_speed = config.max_speed;
         GAME.max_idle_time = config.max_idle_time;
     });
@@ -71,11 +71,13 @@ function init() {
 
     setEventHandlers();
     GAME.spawnAsteroid();
+    GAME.spawnAsteroid();
+    GAME.spawnAsteroid();
 
-    GAME.run(function clientStateUpdate(gameState) {
+    GAME.run(function clientStateUpdate(updatedGameState) {
         var clients = socket.sockets.clients(); // This returns an array with all connected clients
         clients.forEach(function (client) {
-            client.volatile.emit('state update', gameState)
+            client.volatile.emit('state update', updatedGameState)
         })
     });
 };

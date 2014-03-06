@@ -60,8 +60,8 @@
     };
 
     Player.prototype.setJSON = function (newValues) {
-        this.ship.setX(newValues.x);
-        this.ship.setY(newValues.y);
+        this.ship.position.setValue(newValues.ship.position);
+        this.ship.velocity.setValue(newValues.ship.velocity);
         this.id = newValues.id;
         this.name = newValues.name;
 
@@ -85,16 +85,14 @@
 
     Player.prototype.toJSON = function () {
         return {
-            x: this.ship.getX(),
-            y: this.ship.getY(),
             id: this.id,
             name: this.name,
             lastReceivedUpdate: this.lastReceivedUpdate,
             score: this.score,
             ping: this.ping,
             ship: {
-                x: this.ship.getX(),
-                y: this.ship.getY(),
+                position: this.ship.position,
+                velocity: this.ship.velocity,
                 size: this.ship.size,
                 radius: this.ship.radius,
                 health: this.ship.health,
@@ -103,8 +101,6 @@
                 angle: this.ship.angle,
                 accelerating: this.ship.accelerating,
                 afterburner: this.ship.afterburner,
-                vel_x: this.ship.vel_x,
-                vel_y: this.ship.vel_y,
                 turningLeft: this.turningLeft,
                 turningRight: this.turningRight
             }

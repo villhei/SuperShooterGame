@@ -129,10 +129,8 @@
 
     Missile.prototype.toJSON = function () {
         return {
-            x: this.position.x,
-            y: this.position.y,
-            vel_x: this.velocity.x,
-            vel_y: this.velocity.y,
+            position: this.position,
+            velocity: this.velocity,
             angle: this.angle
         }
     }

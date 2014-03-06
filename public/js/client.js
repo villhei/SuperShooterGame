@@ -50,7 +50,6 @@ function init() {
     serverGameState = new GameState();
 
     GAME = new Game();
-    GAME.updatesPerSecond = 60;
     GAME.state.players.push(localPlayer);
 
     // Start listening for events
@@ -142,9 +141,7 @@ function onSocketDisconnect() {
 function onRegisterClient(data) {
     GAME.state.players = GAME.state.players.splice(1, 1);
     localPlayer = new Player(data.id);
-    localPlayer.ship.setX(data.x);
-    localPlayer.ship.setY(data.y);
-
+    localPlayer.ship.position.setValue(data.ship.position);
     console.log("Registered remote id: " + data.id);
     localPlayer.id = data.id;
     localPlayer.setName(data.name);
@@ -219,7 +216,8 @@ function onServerStateUpdate(data) {
     function updateMissiles() {
         serverGameState.missiles = [];
         data.missiles.forEach(function (missile) {
-            var newMissile = new Missile(new Vector(missile.x, missile.y), new Vector(missile.vel_x, missile.vel_y), missile.angle);
+            var newMissile = new Missile(new Vector(missile.position.x, missile.position.y),
+                new Vector(missile.velocity.x, missile.velocity.y), missile.angle);
             serverGameState.missiles.push(newMissile);
         })
     }
@@ -235,21 +233,28 @@ function onServerStateUpdate(data) {
 
 
     function updatePlayers() {
-
+        serverGameState.players = [];
         for (var i = 0; i < data.players.length; ++i) {
 
             var playerInfo = data.players[i];
-            if (playerInfo.id == localPlayer.id) {
-                localPlayer.setJSON(playerInfo);
-                lastClientUpdate = playerInfo.lastReceivedUpdate;
-                lastPing = playerInfo.ping;
-            }
             var player = GAME.state.playerById(playerInfo.id);
+
             if (player) {
-                player.setJSON(playerInfo);
-            } else {
-                console.log(player);
+                if (playerInfo.id == localPlayer.id) {
+                    localPlayer.setJSON(playerInfo);
+                    lastClientUpdate = playerInfo.lastReceivedUpdate;
+                    lastPing = playerInfo.ping;
+                }
+                else {
+                    player.setJSON(playerInfo);
+                }
             }
+            else {
+                console.log("No player found for state update: " + playerInfo.id);
+            }
+            var serverPlayer = new Player(playerInfo.id);
+            serverPlayer.setJSON(playerInfo);
+            serverGameState.players.push(serverPlayer);
         }
     }
 
@@ -267,7 +272,7 @@ function onServerStateUpdate(data) {
     GAME.state.projectiles = serverGameState.projectiles;
     GAME.state.asteroids = serverGameState.asteroids;
 
-    inputHistory = inputHistory.filter(function (element) {
+  /**  inputHistory = inputHistory.filter(function (element) {
         return element.packageNum >= lastClientUpdate;
     })
     var i = 0;
@@ -278,13 +283,7 @@ function onServerStateUpdate(data) {
         }
         i++
         GAME.updateInput(localPlayer, element);
-    })
-    if (i > 0) {
-        var timeNow = new Date().getTime();
-        var skipTime = timeNow - firstFrame;
-        GAME.runGameCycle(skipTime);
-    }
-
+    })**/
 }
 
 function updateClientInput(keys) {
@@ -385,9 +384,13 @@ function draw(frameTime) {
     var i;
     for (i = 0; i < GAME.state.players.length; i++) {
         var player = GAME.state.players[i];
-        drawPlayer(ctx, player);
+        drawPlayer(ctx, player, 0.8);
     }
-    drawPlayer(ctx, localPlayer);
+    for (i = 0; i < serverGameState.players.length; i++) {
+        var player = serverGameState.players[i];
+        drawPlayer(ctx, player, 0.5);
+
+    }
 
     GAME.state.projectiles.forEach(function (projectile) {
         drawProjectile(ctx, projectile);
@@ -402,25 +405,28 @@ function draw(frameTime) {
     drawDebugData();
     drawScores();
 
-    function drawPlayer(ctx, player) {
+    function drawPlayer(ctx, player, alpha) {
         if (player.id === localPlayer.id) {
-            drawShip(ctx, player.ship, "#29C920");
+            var color = 'rgba(128,0,0,' + alpha + ')';
+            drawShip(ctx, player.ship, color);
         } else {
-            drawShip(ctx, player.ship, "#33A0D6");
+            var color = 'rgba(128,128,0,' + alpha + ')';
+            drawShip(ctx, player.ship, color);
         }
         if (player.ship.alive) {
             drawShipThrust(ctx, player.ship);
             drawHealthBox(ctx, player.ship);
         }
-        drawText(ctx, player.getName(), player.ship.getX() - player.ship.size, player.ship.getY() + 2.5 * player.ship.size);
+        // Draw the name label
+        drawText(ctx, player.getName(), player.ship.position.x - player.ship.size, player.ship.position.y + 2.5 * player.ship.size);
     }
 
     function drawHealthBox(ctx, ship) {
         var boxwidth = 25;
         var boxheight = 6;
-
-        var box_x = ship.getX() - ship.size * 0.5;
-        var box_y = ship.getY() + ship.size * 1.2;
+        var shipPos = ship.getPosition();
+        var box_x = shipPos.x - ship.size * 0.5;
+        var box_y = shipPos.y + ship.size * 1.2;
         ctx.strokeStyle = object_border_color;
         ctx.strokeWeight = 1;
         ctx.fillStyle = 'rgb(0, 0, 0)'

@@ -4,15 +4,25 @@
 
         function Vector(x, y) {
         if (typeof x !== 'number') {
-            throw new TypeError("Expected a number but received" +x);
+            throw new TypeError("Expected a number but  " +x);
         }
         if (typeof y !== 'number') {
-            throw new TypeError("Expected a number but received" + y);
+            throw new TypeError("Expected a number but received " + y);
         }
         this.x = x;
         this.y = y;
     }
 
+    Vector.prototype.setValue = function(params) {
+        if (typeof params.x !== 'number') {
+            throw new TypeError("Expected a number but received " +x);
+        }
+        if (typeof params.y !== 'number') {
+            throw new TypeError("Expected a number but received " + y);
+        }
+        this.x = params.x;
+        this.y = params.y;
+    }
 
     Vector.prototype.equals = function (other) {
         return (this.x === other.x && this.y === other.y);
@@ -61,6 +71,10 @@
 
     Vector.prototype.squaredDistance = function (vector) {
         return this.subtract(vector).squaredLength();
+    }
+
+    Vector.prototype.lerp = function(vector, t) {
+        return new Vector(this.x+(vector.x-this.x)*t, this.y+(vector.y-this.y)*t);
     }
 
     Vector.prototype.angle = function (vector) {

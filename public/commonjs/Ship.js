@@ -3,18 +3,16 @@
     exports.Ship = Ship;
 
     function Ship(pos_x, pos_y, id) {
-        this.pos_x = pos_x || 0;
-        this.pos_y = pos_y || 0;
-        this.MAX_SPEED = 350;
+        this.position = new Vector(pos_x, pos_y);
+        this.MAX_SPEED = 40;
         this.accelspeed = 8;
         this.afterburnerMultiplier = 2;
         this.angle = 0.0;
         this.size = 15;
         this.radius = 15;
         this.id = id;
-        this.turningspeed = 7;
-        this.vel_x = 0;
-        this.vel_y = 0;
+        this.turningspeed = 180;
+        this.velocity = new Vector(0, 0);
         this.alive = true;
         this.health = 100;
         this.mass = 20;
@@ -46,29 +44,21 @@
 
 
     Ship.prototype.getPosition = function () {
-        return new Vector(this.pos_x, this.pos_y);
+        return this.position;
     };
 
     Ship.prototype.getThrustPosition = function () {
         var x = Math.cos(this.angle * Math.PI / 180) * -this.size;
         var y = Math.sin(this.angle * Math.PI / 180) * -this.size;
-        return new Vector(x + this.pos_x, y + this.pos_y);
+        return new Vector(x, y).add(this.position);
     }
 
     Ship.prototype.getWeaponPosition = function () {
         return this.getHead();
     }
 
-    Ship.prototype.getX = function () {
-        return this.pos_x;
-    }
-
-    Ship.prototype.getY = function () {
-        return this.pos_y;
-    }
-
     Ship.prototype.getVelocity = function () {
-        return new Vector(this.vel_x, this.vel_y);
+        return this.velocity;
     }
 
     Ship.prototype.regenerate = function (timeDelta) {
@@ -77,7 +67,7 @@
         checkReload(this.missile);
         checkReload(this.cannon);
         if (this.health < 100) {
-            this.health += this.healthPerSecond*(timeDelta/1000);
+            this.health += this.healthPerSecond * (timeDelta / 1000);
         }
 
         function checkReload(weapon) {
@@ -89,19 +79,11 @@
         }
     }
 
-    Ship.prototype.setX = function (newX) {
-        this.pos_x = newX;
-    }
-
-    Ship.prototype.setY = function (newY) {
-        this.pos_y = newY;
-    }
-
     Ship.prototype.getHead = function () {
         var x = Math.cos(this.angle * Math.PI / 180) * this.size;
         var y = Math.sin(this.angle * Math.PI / 180) * this.size;
 
-        return new Vector(x + this.pos_x, y + this.pos_y);
+        return new Vector(x + this.position.x, y + this.position.y);
     };
 
 
@@ -109,61 +91,60 @@
         var x = Math.cos((this.angle - 120) * Math.PI / 180) * this.size;
         var y = Math.sin((this.angle - 120) * Math.PI / 180) * this.size;
 
-        return new Vector(x + this.pos_x, y + this.pos_y);
+        return new Vector(x + this.position.x, y + this.position.y);
     };
 
     Ship.prototype.getRight = function () {
         var x = Math.cos((this.angle + 120) * Math.PI / 180) * this.size;
         var y = Math.sin((this.angle + 120) * Math.PI / 180) * this.size;
 
-        return new Vector(x + this.pos_x, y + this.pos_y);
+        return new Vector(x + this.position.x, y + this.position.y);
     };
 
 
-    Ship.prototype.accelerate = function () {
+    Ship.prototype.accelerate = function (timeDelta) {
         var multiplier = this.afterburner ? this.afterburnerMultiplier : 1;
-        this.vel_x += Math.cos(this.angle * (Math.PI / 180)) * this.accelspeed * multiplier;
-        this.vel_y += Math.sin(this.angle * (Math.PI / 180)) * this.accelspeed * multiplier;
+        var timeFrame = timeDelta / 1000;
+        this.velocity.x += Math.cos(this.angle * (Math.PI / 180)) * this.accelspeed * timeFrame * multiplier;
+        this.velocity.y += Math.sin(this.angle * (Math.PI / 180)) * this.accelspeed * timeFrame * multiplier;
     };
 
     Ship.prototype.update = function (timeDelta) {
-        this.velocity = new Vector(this.vel_x, this.vel_y);
         this.applySpeedLimit();
-        this.pos_x += this.vel_x*(timeDelta/1000);
-        this.pos_y += this.vel_y*(timeDelta/1000);
-
+        this.position = this.position.add(this.velocity);
 
     }
 
     Ship.prototype.applySpeedLimit = function () {
-        if (this.vel_x >= this.MAX_SPEED) {
-            this.vel_x = this.MAX_SPEED;
+        if (this.velocity.x >= this.MAX_SPEED) {
+            this.velocity.x = this.MAX_SPEED;
         }
-        else if (this.vel_x <= -this.MAX_SPEED) {
-            this.vel_x = -this.MAX_SPEED;
+        else if (this.velocity.x <= -this.MAX_SPEED) {
+            this.velocity.x = -this.MAX_SPEED;
         }
-        if (this.vel_y >= this.MAX_SPEED) {
-            this.vel_y = this.MAX_SPEED;
+
+        if (this.velocity.y > this.MAX_SPEED) {
+            this.velocity.y = this.MAX_SPEED;
         }
-        else if (this.vel_y <= -this.MAX_SPEED) {
-            this.vel_y = -this.MAX_SPEED;
+        else if (this.velocity.y <= -this.MAX_SPEED) {
+            this.velocity.y = -this.MAX_SPEED;
         }
     }
 
 
-    Ship.prototype.turnRight = function () {
+    Ship.prototype.turnRight = function (timeDelta) {
         var multiplier = this.afterburner && this.accelerating ? this.afterburnerMultiplier : 1;
-        this.angle += this.turningspeed / multiplier;
-        if (this.angle == 360) {
-            this.angle = 0;
+        this.angle += this.turningspeed * timeDelta / 1000 / multiplier;
+        if (this.angle > 360) {
+            this.angle -= 360;
         }
     }
 
-    Ship.prototype.turnLeft = function () {
+    Ship.prototype.turnLeft = function (timeDelta) {
         var multiplier = this.afterburner && this.accelerating ? this.afterburnerMultiplier : 1;
-        this.angle -= this.turningspeed / multiplier;
+        this.angle -= this.turningspeed * timeDelta / 1000 / multiplier;
         if (this.angle < 0) {
-            this.angle = 360 - Math.abs(this.turningspeed / multiplier);
+            this.angle += 360;
         }
     }
 
