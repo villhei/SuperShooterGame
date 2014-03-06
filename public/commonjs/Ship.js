@@ -18,6 +18,7 @@
         this.mass = 20;
         this.firing_primary = false;
         this.firing_secondary = false;
+        this.accelerationStart = 0;
         this.missile = {
             fireDelay: 200,
             lastFire: 0,
@@ -101,34 +102,35 @@
         return new Vector(x + this.position.x, y + this.position.y);
     };
 
+    Ship.prototype.startAcceleration = function () {
+        this.accelerationStart = new Date().getTime();
+    }
 
-    Ship.prototype.accelerate = function (timeDelta) {
+    Ship.prototype.stopAcceleration = function () {
+        this.accelerationStart = 0;
+    }
+
+    Ship.prototype.accelerate = function () {
         var multiplier = this.afterburner ? this.afterburnerMultiplier : 1;
-        var timeFrame = timeDelta / 1000;
-        this.velocity.x += Math.cos(this.angle * (Math.PI / 180)) * this.accelspeed * timeFrame * multiplier;
-        this.velocity.y += Math.sin(this.angle * (Math.PI / 180)) * this.accelspeed * timeFrame * multiplier;
+
+        this.accelspeed = 30;
+
+        var accelTime = (new Date().getTime() - this.accelerationStart)/1000;
+        this.velocity.x += Math.cos(this.angle * (Math.PI / 180)) * this.accelspeed * accelTime * multiplier;
+        this.velocity.y += Math.sin(this.angle * (Math.PI / 180)) * this.accelspeed * accelTime * multiplier;
+        this.startAcceleration();
     };
 
     Ship.prototype.update = function (timeDelta) {
         this.applySpeedLimit();
-        this.position = this.position.add(this.velocity);
+        if (this.accelerationStart != 0) {
+            this.accelerate();
+        }
+        this.position = this.position.add(this.velocity.multiply(timeDelta/1000));
 
     }
 
     Ship.prototype.applySpeedLimit = function () {
-        if (this.velocity.x >= this.MAX_SPEED) {
-            this.velocity.x = this.MAX_SPEED;
-        }
-        else if (this.velocity.x <= -this.MAX_SPEED) {
-            this.velocity.x = -this.MAX_SPEED;
-        }
-
-        if (this.velocity.y > this.MAX_SPEED) {
-            this.velocity.y = this.MAX_SPEED;
-        }
-        else if (this.velocity.y <= -this.MAX_SPEED) {
-            this.velocity.y = -this.MAX_SPEED;
-        }
     }
 
 

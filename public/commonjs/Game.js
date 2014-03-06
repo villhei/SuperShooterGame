@@ -21,7 +21,6 @@
         this.max_speed = 15;
         this.respawnTime = 1000;
         this.state = new GameState();
-        this.updatesPerSecond = 30;
         this.gameRunner;
         this.serverInstance = false;
         this.max_idle_time = 60 * 1000;
@@ -82,7 +81,9 @@
 
     Game.prototype.updateShip = function (ship, timeDelta) {
         if (ship.accelerating) {
-            ship.accelerate(timeDelta);
+            ship.startAcceleration();
+        } else {
+            ship.stopAcceleration();
         }
         if (ship.turningLeft) {
             ship.turnLeft(timeDelta);
@@ -285,11 +286,16 @@
         }
     }
 
-    Game.prototype.run = function (gameStateUpdater) {
+    Game.prototype.clientRunner = function(deltaTime) {
+        this.state.ticks++;
+        this.runGameCycle(deltaTime);
+    }
+
+    Game.prototype.runServer = function (gameStateUpdater) {
         var game = this;
         game.state.ticks = 0;
         var lastUpdate = new Date().getTime();
-        var updateDelay = 1000 / this.updatesPerSecond;
+        var updateDelay = 1000 / 20;
 
         this.gameRunner = setInterval(function () {
             var beforeFrame = new Date().getTime();
@@ -297,7 +303,6 @@
             game.state.ticks++;
             game.runGameCycle(measuredUpdateDelay);
             gameStateUpdater(game.packGameData());
-
             lastUpdate = new Date().getTime();
 
         }, updateDelay);

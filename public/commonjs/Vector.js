@@ -64,6 +64,9 @@
         return new Vector(this.x / value, this.y / value)
     };
 
+    Vector.prototype.isZero = function() {
+        return this.x == 0 && this.y == 0;
+    }
 
     Vector.prototype.distance = function (vector) {
         return this.subtract(vector).length();

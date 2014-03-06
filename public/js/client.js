@@ -43,7 +43,7 @@ function init() {
     keys = new Keys();
 
     try {
-        socket = io.connect("http://ssg.plop.fi", {port: 8888, transports: ["websocket"]});
+        socket = io.connect("http://localhost", {port: 8888, transports: ["websocket"]});
     } catch (ex) {
         console.log("Failed to instantiate Socket.IO ", ex.message);
     }
@@ -51,12 +51,13 @@ function init() {
 
     GAME = new Game();
     GAME.state.players.push(localPlayer);
+    GAME.respawnShip(localPlayer);
 
     // Start listening for events
     setEventHandlers();
-    GAME.run(function (gameState) {
-        // EMPTY
-    });
+    //  GAME.run(function (gameState) {
+    // EMPTY
+    // });
 
 };
 
@@ -108,6 +109,7 @@ var setEventHandlers = function () {
 function onKeydown(e) {
     if (localPlayer) {
         keys.onKeyDown(e);
+        update();
     }
     ;
 };
@@ -116,6 +118,7 @@ function onKeydown(e) {
 function onKeyup(e) {
     if (localPlayer) {
         keys.onKeyUp(e);
+        update();
     }
     ;
 };
@@ -176,7 +179,6 @@ function onRemovePlayer(data) {
 var update_seq = 0;
 var inputHistory = [];
 function update() {
-
     var movementData;
     if (localPlayer) {
         movementData = updateClientInput(keys);
@@ -241,7 +243,7 @@ function onServerStateUpdate(data) {
 
             if (player) {
                 if (playerInfo.id == localPlayer.id) {
-                   // localPlayer.setJSON(playerInfo);
+                    localPlayer.setJSON(playerInfo);
                     lastClientUpdate = playerInfo.lastReceivedUpdate;
                     lastPing = playerInfo.ping;
                 }
@@ -272,12 +274,12 @@ function onServerStateUpdate(data) {
     GAME.state.projectiles = serverGameState.projectiles;
     GAME.state.asteroids = serverGameState.asteroids;
 
-  /**  inputHistory = inputHistory.filter(function (element) {
+    /**  inputHistory = inputHistory.filter(function (element) {
         return element.packageNum >= lastClientUpdate;
     })
-    var i = 0;
-    var firstFrame = 0;
-    inputHistory.forEach(function (element) {
+     var i = 0;
+     var firstFrame = 0;
+     inputHistory.forEach(function (element) {
         if (i == 0) {
             firstFrame = element.timeStamp;
         }
@@ -339,25 +341,20 @@ function updateClientInput(keys) {
  ** Game ANIMATION LOOP
  **************************************************/
 
-var lastUpdate = 0;
-var MAX_FPS = 60;
 var lastFrame = null;
 function animate() {
     if (lastFrame == null) {
         lastFrame = new Date().getTime();
     }
     var timeNow = new Date().getTime();
+    if (GAME) {
+        GAME.clientRunner((timeNow-lastFrame)-lastPing/2);
+    }
     draw(timeNow - lastFrame);
     lastFrame = new Date().getTime();
-
     // Request a new animation frame using Paul Irish's shim
     window.requestAnimFrame(animate);
 };
-
-
-function runGame() {
-    window.setInterval(update, 1000 / 30);
-}
 
 
 /**************************************************
@@ -386,11 +383,9 @@ function draw(frameTime) {
         var player = GAME.state.players[i];
         drawPlayer(ctx, player, 0.8);
     }
-    for (i = 0; i < serverGameState.players.length; i++) {
-        var player = serverGameState.players[i];
-        drawPlayer(ctx, player, 0.5);
 
-    }
+
+
 
     GAME.state.projectiles.forEach(function (projectile) {
         drawProjectile(ctx, projectile);
