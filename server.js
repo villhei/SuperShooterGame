@@ -70,9 +70,6 @@ function init() {
     });
 
     setEventHandlers();
-    GAME.spawnAsteroid();
-    GAME.spawnAsteroid();
-    GAME.spawnAsteroid();
 
     GAME.run(function clientStateUpdate(updatedGameState) {
         var clients = socket.sockets.clients(); // This returns an array with all connected clients

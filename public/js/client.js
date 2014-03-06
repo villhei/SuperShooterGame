@@ -43,7 +43,7 @@ function init() {
     keys = new Keys();
 
     try {
-        socket = io.connect("http://localhost", {port: 8888, transports: ["websocket"]});
+        socket = io.connect("http://ssg.plop.fi", {port: 8888, transports: ["websocket"]});
     } catch (ex) {
         console.log("Failed to instantiate Socket.IO ", ex.message);
     }
@@ -241,7 +241,7 @@ function onServerStateUpdate(data) {
 
             if (player) {
                 if (playerInfo.id == localPlayer.id) {
-                    localPlayer.setJSON(playerInfo);
+                   // localPlayer.setJSON(playerInfo);
                     lastClientUpdate = playerInfo.lastReceivedUpdate;
                     lastPing = playerInfo.ping;
                 }
