@@ -4,7 +4,7 @@
 
     function Ship(pos_x, pos_y, id) {
         this.position = new Vector(pos_x, pos_y);
-        this.MAX_SPEED = 40;
+        this.MAX_SPEED = 500;
         this.accelspeed = 8;
         this.afterburnerMultiplier = 2;
         this.angle = 0.0;
@@ -15,7 +15,7 @@
         this.velocity = new Vector(0, 0);
         this.alive = true;
         this.health = 100;
-        this.mass = 20;
+        this.mass = 100;
         this.firing_primary = false;
         this.firing_secondary = false;
         this.accelerationStart = 0;
@@ -147,7 +147,7 @@
         this.velocity.x += Math.cos(this.angle * (Math.PI / 180)) * this.accelspeed * accelTime * multiplier;
         this.velocity.y += Math.sin(this.angle * (Math.PI / 180)) * this.accelspeed * accelTime * multiplier;
 
-        this.accelerationStart = this.resetClock(0);
+        this.accelerationStart = this.resetClock(2);
     };
 
     Ship.prototype.update = function (timeDelta) {
@@ -167,6 +167,14 @@
 
 
     Ship.prototype.applySpeedLimit = function () {
+        if (Math.abs(this.velocity.length()) > this.MAX_SPEED) {
+            if (this.velocity.length() < 0) {
+                this.velocity = -(this.velocity.normalize().multiply(this.MAX_SPEED));
+            } else {
+                this.velocity = (this.velocity.normalize().multiply(this.MAX_SPEED));
+            }
+
+        }
     }
 
 

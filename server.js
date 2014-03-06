@@ -62,6 +62,8 @@ function init() {
 
     setEventHandlers();
 
+    GAME.spawnPlanet();
+
     GAME.runServer(function clientStateUpdate(updatedGameState) {
         var clients = socket.sockets.clients(); // This returns an array with all connected clients
         clients.forEach(function (client) {
@@ -84,10 +86,12 @@ function onSocketConnection(clientSocket) {
     clientSocket.on("change name", onChangePlayerName);
     clientSocket.on('pong', function () {
         var player = GAME.state.playerById(clientSocket.id);
-        var latency = Date.now() - startTime;
-        player.setPing(latency);
-        if (LOG_PING) {
-            util.log("Ping for " + clientSocket.id + ": " + latency + "ms");
+        if (player) {
+            var latency = Date.now() - startTime;
+            player.setPing(latency);
+            if (LOG_PING) {
+                util.log("Ping for " + clientSocket.id + ": " + latency + "ms");
+            }
         }
     });
 
@@ -139,6 +143,7 @@ function onNewPlayer(data) {
 
     newPlayer.setName(data.name);
     console.log("New player connected: " + newPlayer);
+
 
     this.broadcast.emit("new player", newPlayer.toJSON());
     this.emit("register client", newPlayer.toJSON());

@@ -22,6 +22,9 @@ var Asteroid = exports.Asteroid;
 var canvas_width = 800;
 var canvas_height = 800;
 
+var planetImage = new Image();
+planetImage.src = 'img/planet_glow.jpg'
+
 
 var GAME;
 
@@ -374,9 +377,11 @@ function draw(frameTime) {
         ctx.fillRect(0, 0, canvas.width, canvas.height);
     }
 
-    /* Draw players */
-
     fillBackGround(ctx, "#000");
+
+    GAME.state.asteroids.forEach(function (asteroid) {
+        drawAsteroid(ctx, asteroid);
+    })
 
     var i;
     for (i = 0; i < GAME.state.players.length; i++) {
@@ -400,9 +405,7 @@ function draw(frameTime) {
         drawMissile(ctx, missile);
     })
 
-    GAME.state.asteroids.forEach(function (asteroid) {
-        drawAsteroid(ctx, asteroid);
-    })
+
     drawDebugData();
     drawScores();
 
@@ -526,15 +529,8 @@ function draw(frameTime) {
 
     function drawAsteroid(ctx, asteroid) {
         var position = asteroid.position;
-        var size = asteroid.radius;
-        var projectile_color = '#fff'
-        var oldStyle = ctx.fillStyle;
-        ctx.beginPath();
-        ctx.arc(position.x, position.y, size, 0, 2 * Math.PI, false);
-        ctx.fillStyle = projectile_color;
-        ctx.closePath();
-        ctx.fill();
-        ctx.fillStyle = oldStyle;
+        ctx.drawImage(planetImage, position.x-152, position.y-152, 305, 305);
+
     }
 
     function drawMissile(ctx, missile) {

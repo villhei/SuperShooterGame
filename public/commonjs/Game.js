@@ -43,7 +43,7 @@
         if (movementData.accel_x < 0) {
             player.ship.turningLeft = true;
             if (this.serverInstance && player.ping > 0) {
-                player.ship.startTurningLeft(player.ping/2);
+                player.ship.startTurningLeft(0);
             } else {
                 player.ship.startTurningLeft();
             }
@@ -55,7 +55,7 @@
         if (movementData.accel_x > 0) {
             player.ship.turningRight = true;
             if (this.serverInstance && player.ping > 0) {
-                player.ship.startTurningRight(player.ping/2);
+                player.ship.startTurningRight(0);
             } else {
                 player.ship.startTurningRight();
             }
@@ -123,18 +123,18 @@
         }
     }
 
-    Game.prototype.spawnAsteroid = function (position) {
+    Game.prototype.spawnPlanet = function (position) {
         if (!position) {
-            var startX = Math.round(Math.random() * (this.state.sizeX)),
-                startY = Math.round(Math.random() * (this.state.sizeY));
-            position = new Vector(startX, startY);
+            var x = this.state.sizeX / 2,
+                y = this.state.sizeY / 2
+
+            position = new Vector(x, y);
         }
-        var vel_x = Math.random() * 10 - 10;
-        var vel_y = Math.random() * 10 - 10;
-        var velocity = new Vector(vel_x, vel_y);
-        var asteroid = new Asteroid(Math.random() * 100, position, velocity);
-        this.state.asteroids.push(asteroid);
+        var velocity = new Vector(0, 0);
+
+        var asteroid = new Asteroid(100, position, velocity);
         console.log(asteroid);
+        this.state.asteroids.push(asteroid);
     }
 
     Game.prototype.updatePlayerInput = function (playerId, movementData) {
@@ -251,6 +251,7 @@
                 if (asteroid.health <= 0) {
                     asteroid.alive = false;
                 }
+                projectile.alive = false;
             }
         });
     }
