@@ -6,14 +6,13 @@
 
     exports.GameState = GameState;
 
-    function GameState() {
+    function GameState(size) {
 
         this.players = [];
         this.projectiles = [];
         this.missiles = [];
-        this.asteroids = [];
-        this.sizeX = 800;
-        this.sizeY = 800;
+        this.planets = [];
+        this.size = size || 500;
         this.ticks = 0;
 
     }

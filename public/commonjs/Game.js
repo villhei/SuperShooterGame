@@ -3,6 +3,11 @@
     exports.Game = Game;
 
     function Game() {
+        this.respawnTime = 1000;
+        this.gameRunner;
+        this.serverInstance = false;
+        this.max_idle_time = 60 * 1000;
+
         this.missile = {
             velocity: 10,
             fireDelay: 500,
@@ -18,12 +23,15 @@
             reloadDelay: 150,
             reloadAmount: 10
         }
-        this.max_speed = 15;
-        this.respawnTime = 1000;
-        this.state = new GameState();
-        this.gameRunner;
-        this.serverInstance = false;
-        this.max_idle_time = 60 * 1000;
+        this.area = {
+
+        };
+    }
+
+    Game.prototype.init = function() {
+
+        this.state = new GameState(this.area.size);
+
     }
 
     Game.prototype.removePlayer = function (playerId) {
@@ -99,14 +107,6 @@
     }
 
     Game.prototype.updateShip = function (ship, timeDelta) {
-        if (ship.accelerating) {
-        } else {
-        }
-        if (ship.turningLeft) {
-        }
-        if (ship.turningRight) {
-        }
-
         if (ship.firing_primary) {
             var bullet = this.fireWeapon(ship, ship.cannon, Projectile);
             if (bullet) {
@@ -121,20 +121,22 @@
                 this.state.missiles.push(missile);
             }
         }
+
+        this.state.planets.forEach(function(planet) {
+          //  var gravityPull = planet.getGravityForce(ship.position);
+         //   var pullAngle = ship.position.angle(planet.position);
+        //    ship.applyPullForce(gravityPull/10, -pullAngle);
+        })
     }
 
     Game.prototype.spawnPlanet = function (position) {
         if (!position) {
-            var x = this.state.sizeX / 2,
-                y = this.state.sizeY / 2
-
-            position = new Vector(x, y);
+            return;
         }
         var velocity = new Vector(0, 0);
 
-        var asteroid = new Asteroid(100, position, velocity);
-        console.log(asteroid);
-        this.state.asteroids.push(asteroid);
+        var planet = new Planet(100, position, velocity);
+        this.state.planets.push(planet);
     }
 
     Game.prototype.updatePlayerInput = function (playerId, movementData) {
@@ -148,15 +150,15 @@
     }
 
     Game.prototype.respawnShip = function (player) {
-        var startX = Math.round(Math.random() * (this.state.sizeX)),
-            startY = Math.round(Math.random() * (this.state.sizeY));
-        player.ship = new Ship(startX, startY, player.id);
+        var startX = Math.round(Math.random() * (this.area.size)),
+            startY = Math.round(Math.random() * (this.area.size));
+        player.ship = new Ship(500, 500, player.id);
     }
 
     Game.prototype.runGameCycle = function (timeDelta) {
         this.updateBallistics(timeDelta);
         this.updatePlayers(timeDelta);
-        this.updateAsteroids(timeDelta);
+        this.updatePlanets(timeDelta);
     }
 
     Game.prototype.updateBallistics = function (timeDelta) {
@@ -164,27 +166,22 @@
         this.state.missiles = this.updateWeapon(timeDelta, this.state.missiles);
     }
 
-    Game.prototype.updateAsteroids = function (timeDelta) {
+    Game.prototype.updatePlanets = function (timeDelta) {
         var game = this;
-        this.state.asteroids.forEach(function (asteroid) {
-            if (!asteroid.alive) {
+        this.state.planets.forEach(function (planet) {
+            if (!planet.alive) {
                 console.log("kaboom!")
             } else {
-                asteroid.move(timeDelta);
-                game.checkAreaBounds(asteroid);
+                planet.move(timeDelta);
+                game.checkAreaBounds(planet);
                 game.state.players.forEach(function (player) {
-                    if (player.ship.getPosition().subtract(asteroid.position).length() <= player.ship.size + asteroid.radius) {
-                        asteroid.collision(player.ship);
+                    if (player.ship.getPosition().subtract(planet.position).length() <= player.ship.size + planet.radius) {
+                        planet.collision(player.ship);
                     }
                 });
 
             }
         })
-        var active = this.state.asteroids.filter(function (asteroid) {
-            return asteroid.alive;
-        });
-
-        this.state.asteroids = active;
     }
 
 
@@ -245,11 +242,11 @@
                 }
             }
         });
-        game.state.asteroids.forEach(function (asteroid) {
-            if (projectile.position.distance(asteroid.getPosition()) <= asteroid.radius) {
-                asteroid.health -= projectile.damage;
-                if (asteroid.health <= 0) {
-                    asteroid.alive = false;
+        game.state.planets.forEach(function (planet) {
+            if (projectile.position.distance(planet.getPosition()) <= planet.radius) {
+                planet.health -= projectile.damage;
+                if (planet.health <= 0) {
+                    planet.alive = false;
                 }
                 projectile.alive = false;
             }
@@ -282,6 +279,7 @@
     }
 
     Game.prototype.checkAreaBounds = function (movableEntity) {
+        return;
 
         var me = movableEntity;
         try {
@@ -329,10 +327,9 @@
         var projectiles = [];
         var missiles = [];
         var scores = [];
-        var asteroids = [];
+        var planets = [];
         var tickCount = this.state.ticks;
-        var sizeX = this.state.sizeX;
-        var sizeY = this.state.sizeY;
+        var size = this.area.size;
 
         var i;
         for (i = 0; i < this.state.players.length; ++i) {
@@ -349,17 +346,16 @@
         this.state.missiles.forEach(function (missile) {
             missiles.push(missile.toJSON());
         });
-        this.state.asteroids.forEach(function (asteroid) {
-            asteroids.push(asteroid.toJSON());
+        this.state.planets.forEach(function (planet) {
+            planets.push(planet.toJSON());
         });
         return {
-            sizeX: sizeX,
-            sizeY: sizeY,
+            size: size,
             players: players,
             scores: scores,
             ticks: tickCount,
             missiles: missiles,
-            asteroids: asteroids,
+            planets: planets,
             projectiles: projectiles
         }
     }

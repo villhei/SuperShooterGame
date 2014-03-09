@@ -150,6 +150,12 @@
         this.accelerationStart = this.resetClock(2);
     };
 
+    Ship.prototype.applyPullForce = function(pullForce, pullAngle) {
+
+        this.velocity.x -= Math.cos(Math.abs(pullAngle) * (Math.PI / 180)) * pullForce;
+        this.velocity.y -= Math.sin(Math.abs(pullAngle) * (Math.PI / 180)) * pullForce;
+    }
+
     Ship.prototype.update = function (timeDelta) {
         this.applySpeedLimit();
         if (this.accelerationStart != 0) {

@@ -11,7 +11,7 @@ Game = require("./public/commonjs/Game").Game;
 GameState = require('./public/commonjs/GameState').GameState;
 Projectile = require('./public/commonjs/Projectile').Projectile;
 Missile = require('./public/commonjs/Missile').Missile;
-Asteroid = require('./public/commonjs/Asteroid').Asteroid;
+Planet = require('./public/commonjs/Planet').Planet;
 var LOG_PING = false;
 
 var socket,
@@ -35,12 +35,13 @@ function init() {
         util.log("Updates/s  : " + config.updatesPerSecond);
 
         GAME.area = {
-            sizeX: config.sizeX || 800,
-            sizeY: config.sizeY || 600
-        }
+            radius: 900
+        };
 
         GAME.updatesPerSecond = 15;
     });
+
+    GAME.init();
 
     /*
      HOST the client files
@@ -62,7 +63,12 @@ function init() {
 
     setEventHandlers();
 
-    GAME.spawnPlanet();
+    GAME.spawnPlanet(new Vector(0,0));
+    GAME.spawnPlanet(new Vector(500,0));
+    GAME.spawnPlanet(new Vector(-500,0));
+    GAME.spawnPlanet(new Vector(0,500));
+    GAME.spawnPlanet(new Vector(0,-500));
+
 
     GAME.runServer(function clientStateUpdate(updatedGameState) {
         var clients = socket.sockets.clients(); // This returns an array with all connected clients
@@ -154,7 +160,6 @@ function onNewPlayer(data) {
         this.emit("new player", existingPlayer.toJSON());
     }
     ;
-
     GAME.state.players.push(newPlayer);
 };
 

@@ -4,21 +4,21 @@
 
 (function (exports) {
 
-    exports.Asteroid = Asteroid;
+    exports.Planet = Planet;
 
-    function Asteroid(radius, position, velocity) {
+    function Planet(radius, position, velocity) {
         this.position = position;
         this.velocity = velocity;
         this.radius = radius;
-        this.mass = 20000;
+        this.mass = 2000;
         this.alive = true;
         this.health = 10000;
-        this.restitution = 0.05;
+        this.restitution = 0;
         this.regenerationRate = 0.1;
 
     }
 
-    Asteroid.prototype.toJSON = function () {
+    Planet.prototype.toJSON = function () {
         return {
             x: this.position.x,
             y: this.position.y,
@@ -30,7 +30,7 @@
         }
     }
 
-    Asteroid.prototype.setJSON = function (data) {
+    Planet.prototype.setJSON = function (data) {
         this.position = new Vector(data.x, data.y);
         this.velocity = new Vector(data.vx, data.vy);
         this.radius = data.radius;
@@ -38,26 +38,31 @@
         this.mass = data.mass;
     }
 
-    Asteroid.prototype.move = function (timeDelta) {
+    Planet.prototype.move = function (timeDelta) {
         // this.position = this.position.add(this.velocity.multiply(timeDelta/1000));
     }
 
-    Asteroid.prototype.update = function () {
+    Planet.prototype.update = function () {
         if (this.health < mass) {
             this.health += this.regenerationRate;
         }
     }
 
-    Asteroid.prototype.getPosition = function () {
+    Planet.prototype.getPosition = function () {
         return this.position;
     }
 
+    Planet.prototype.getGravityForce = function(fromPosition) {
+        var gravity =  this.mass / this.position.subtract(fromPosition).length()*2;
+        return gravity;
+    }
 
-    Asteroid.prototype.getVelocity = function () {
+
+    Planet.prototype.getVelocity = function () {
         return this.velocity;
     }
 
-    Asteroid.prototype.collision = function (otherObject) {
+    Planet.prototype.collision = function (otherObject) {
 
          var otherPosition = otherObject.position;
          var otherVelocity = otherObject.velocity;
@@ -88,4 +93,4 @@
     }
 
 
-})(typeof exports === 'undefined' ? this['Asteroid'] = {} : exports);
+})(typeof exports === 'undefined' ? this['Planet'] = {} : exports);

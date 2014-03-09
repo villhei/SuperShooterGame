@@ -16,17 +16,15 @@ var Ship = exports.Ship;
 var Vector = exports.Vector;
 var Projectile = exports.Projectile;
 var Missile = exports.Missile;
-var Asteroid = exports.Asteroid;
+var Planet = exports.Planet;
 
-
-var canvas_width = 800;
-var canvas_height = 800;
 
 var planetImage = new Image();
 planetImage.src = 'img/planet_glow.jpg'
 
 
 var GAME;
+var GRAPHICS;
 
 /**************************************************
  ** Game INITIALISATION
@@ -36,8 +34,6 @@ function init() {
     canvas = document.getElementById("gameCanvas");
     ctx = canvas.getContext("2d");
     // Maximise the canvas
-    canvas.width = canvas_width;
-    canvas.height = canvas_height;
     window_active = true;
 
     localPlayer = new Player("LOCAL_DUMMY");
@@ -46,15 +42,18 @@ function init() {
     keys = new Keys();
 
     try {
-        socket = io.connect("http://ssg.plop.fi", {port: 8888, transports: ["websocket"]});
+        socket = io.connect("http://localhost", {port: 8888, transports: ["websocket"]});
     } catch (ex) {
         console.log("Failed to instantiate Socket.IO ", ex.message);
     }
     serverGameState = new GameState();
 
     GAME = new Game();
+    GAME.init();
     GAME.state.players.push(localPlayer);
     GAME.respawnShip(localPlayer);
+
+    GRAPHICS = new Graphics(canvas);
 
     // Start listening for events
     setEventHandlers();
@@ -92,7 +91,7 @@ var setEventHandlers = function () {
 
 
     // Window resize
-    window.addEventListener("resize", onResize, false);
+    window.addEventListener("resize", GRAPHICS.onResize, false);
 
     if (socket) {
         socket.on("connect", onSocketConnected);
@@ -127,11 +126,6 @@ function onKeyup(e) {
 };
 
 // Browser window resize
-function onResize(e) {
-    // Maximise the canvas
-    canvas.width = canvas_width;
-    canvas.height = canvas_height;
-};
 
 function onSocketConnected() {
     console.log("Connected to socket server");
@@ -152,6 +146,7 @@ function onRegisterClient(data) {
     localPlayer.id = data.id;
     localPlayer.setName(data.name);
     GAME.state.players.push(localPlayer);
+    console.log("Client registerd: " + localPlayer);
 
 }
 function onNewPlayer(data) {
@@ -201,12 +196,11 @@ var lastClientUpdate = 0;
 var lastPing = 0;
 function onServerStateUpdate(data) {
     serverGameState.ticks = data.ticks;
-    GAME.state.sizeX = data.sizeX;
-    GAME.state.sizeY = data.sizeY;
+    GAME.state.size = data.size;
     updatePlayers();
     updateProjectiles();
     updateMissiles();
-    updateAsteroids();
+    updatePlanets();
     updateScores();
 
     function updateProjectiles() {
@@ -227,12 +221,12 @@ function onServerStateUpdate(data) {
         })
     }
 
-    function updateAsteroids() {
-        serverGameState.asteroids = [];
-        data.asteroids.forEach(function (asteroidInfo) {
-            var newAsteroid = new Asteroid();
-            newAsteroid.setJSON(asteroidInfo);
-            serverGameState.asteroids.push(newAsteroid);
+    function updatePlanets() {
+        serverGameState.planets = [];
+        data.planets.forEach(function (planetInfo) {
+            var planet = new Planet();
+            planet.setJSON(planetInfo);
+            serverGameState.planets.push(planet);
         })
     }
 
@@ -275,7 +269,7 @@ function onServerStateUpdate(data) {
 
     GAME.state.missiles = serverGameState.missiles;
     GAME.state.projectiles = serverGameState.projectiles;
-    GAME.state.asteroids = serverGameState.asteroids;
+    GAME.state.planets = serverGameState.planets;
 
     inputHistory = inputHistory.filter(function (element) {
         return element.packageNum >= lastClientUpdate;
@@ -353,242 +347,9 @@ function animate() {
     if (GAME) {
         GAME.clientRunner((timeNow - lastFrame) - lastPing / 2);
     }
-    draw(timeNow - lastFrame);
+    GRAPHICS.draw();
+
     lastFrame = new Date().getTime();
     // Request a new animation frame using Paul Irish's shim
     window.requestAnimFrame(animate);
-};
-
-
-/**************************************************
- ** Game DRAW
- **************************************************/
-function draw(frameTime) {
-
-    var object_border_color = '#E9F2F7'
-    var thrust_color = 'rgba(3, 196, 255, 0.2)';
-    var afterburner_color = 'rgba(187, 242, 250, 0.2)';
-
-    // Wipe the canvas clean
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-    function fillBackGround(ctx, color) {
-        ctx.fillStyle = color;
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-    }
-
-    fillBackGround(ctx, "#000");
-
-    GAME.state.asteroids.forEach(function (asteroid) {
-        drawAsteroid(ctx, asteroid);
-    })
-
-    var i;
-    for (i = 0; i < GAME.state.players.length; i++) {
-        var player = GAME.state.players[i];
-        drawPlayer(ctx, player, 0.8);
-    }
-
-    if (drawServerState = false) {
-        var i;
-        for (i = 0; i < serverGameState.players.length; i++) {
-            var player = serverGameState.players[i];
-            drawPlayer(ctx, player, 0.2);
-        }
-    }
-
-
-    GAME.state.projectiles.forEach(function (projectile) {
-        drawProjectile(ctx, projectile);
-    })
-    GAME.state.missiles.forEach(function (missile) {
-        drawMissile(ctx, missile);
-    })
-
-
-    drawDebugData();
-    drawScores();
-
-    function drawPlayer(ctx, player, alpha) {
-        if (player.id === localPlayer.id) {
-            var color = 'rgba(128,0,0,' + alpha + ')';
-            drawShip(ctx, player.ship, color);
-        } else {
-            var color = 'rgba(128,128,0,' + alpha + ')';
-            drawShip(ctx, player.ship, color);
-        }
-        if (player.ship.alive) {
-            drawShipThrust(ctx, player.ship);
-            drawHealthBox(ctx, player.ship);
-        }
-        // Draw the name label
-        drawText(ctx, player.getName(), player.ship.position.x - player.ship.size, player.ship.position.y + 2.5 * player.ship.size);
-    }
-
-    function drawHealthBox(ctx, ship) {
-        var boxwidth = 25;
-        var boxheight = 6;
-        var shipPos = ship.getPosition();
-        var box_x = shipPos.x - ship.size * 0.5;
-        var box_y = shipPos.y + ship.size * 1.2;
-        ctx.strokeStyle = object_border_color;
-        ctx.strokeWeight = 1;
-        ctx.fillStyle = 'rgb(0, 0, 0)'
-        ctx.strokeRect(box_x, box_y, boxwidth, boxheight);
-        ctx.fillStyle = '#F6FF00'
-        ctx.fillRect(box_x + 1, box_y + 2, (boxwidth - 2) * (ship.health / 100), boxheight - 4);
-    }
-
-    function drawShipThrust(ctx, ship) {
-        if (ship.accelerating) {
-            var position = ship.getThrustPosition();
-            if (ship.afterburner) {
-                var blob = ship.getThrustPosition();
-                blob.color = afterburner_color;
-            } else {
-                var blob = new Vector(position.x, position.y);
-                blob.color = thrust_color;
-            }
-            blob.lifeTime = 20;
-            ship.thrust.push(blob);
-        }
-        var arc_size = 5;
-        ship.thrust = ship.thrust.filter(function (element) {
-            return element.lifeTime > 0
-        });
-        var multiplier = 0.1;
-        ship.thrust.forEach(function (thrust) {
-            thrust.lifeTime--;
-            ctx.beginPath();
-            ctx.arc(thrust.x, thrust.y, arc_size * multiplier, 2 * Math.PI, false);
-            ctx.closePath();
-            ctx.fillStyle = thrust.color;
-            ctx.fill();
-            multiplier *= 1.1
-        })
-    }
-
-    function drawText(ctx, text, x, y, color) {
-        var fontSize = 12;
-        var fontStyle = 'Arial';
-        var fontColor = color || '#fff';
-
-        ctx.font = fontSize + 'px ' + fontStyle;
-        ctx.fillStyle = fontColor;
-
-        ctx.fillText(text, x, y);
-    }
-
-    function drawShip(ctx, ship, shipColor) {
-        var left = ship.getLeft();
-        var right = ship.getRight();
-        var head = ship.getHead();
-        var position = ship.getPosition();
-        var color = ship.alive ? shipColor : "#748599";
-        ctx.strokeStyle = object_border_color;
-        ctx.beginPath();
-        ctx.moveTo(head.x, head.y);
-        ctx.lineTo(left.x, left.y);
-        ctx.lineTo(position.x, position.y);
-        ctx.lineTo(right.x, right.y);
-        ctx.lineTo(head.x, head.y);
-        ctx.lineWidth = 1;
-        ctx.stroke();
-        ctx.closePath();
-        ctx.fillStyle = color;
-        ctx.fill();
-
-        function drawGlare() {
-            var color = 'rgba(0,0,0,0.2)'
-            ctx.beginPath();
-            ctx.moveTo(head.x, head.y);
-            ctx.lineTo(left.x, left.y);
-            ctx.lineTo(position.x, position.y);
-            ctx.lineTo(head.x, head.y);
-            ctx.closePath();
-            ctx.fillStyle = color;
-            ctx.fill();
-        }
-
-        drawGlare();
-    }
-
-
-    function drawProjectile(ctx, projectile) {
-        var position = projectile.position;
-        var projectile_size = 1;
-        var projectile_color = '#fff'
-        var oldStyle = ctx.fillStyle;
-        ctx.beginPath();
-        ctx.arc(position.x, position.y, projectile_size, 0, 2 * Math.PI, false);
-        ctx.fillStyle = projectile_color;
-        ctx.closePath();
-        ctx.fill();
-        ctx.fillStyle = oldStyle;
-    }
-
-    function drawAsteroid(ctx, asteroid) {
-        var position = asteroid.position;
-        ctx.drawImage(planetImage, position.x-152, position.y-152, 305, 305);
-
-    }
-
-    function drawMissile(ctx, missile) {
-        var color = '#fff'
-        var left = missile.getLeft();
-        var right = missile.getRight();
-        var head = missile.getHead();
-        ctx.beginPath();
-        ctx.moveTo(head.x, head.y);
-        ctx.lineTo(left.x, left.y);
-        ctx.lineTo(right.x, right.y);
-        ctx.lineTo(head.x, head.y);
-        ctx.closePath();
-        ctx.fillStyle = color;
-        ctx.fill();
-    }
-
-    function drawDebugData() {
-        var boxwidth = 200;
-        var boxheight = 70;
-
-        var box_x = (canvas.width - boxwidth) / 2;
-        var box_y = 0;
-
-        var padding = 5;
-
-        ctx.fillStyle = 'rgba(255, 255, 255, 0.2)'
-        ctx.fillRect(box_x, box_y, boxwidth, boxheight);
-
-        var text = 'Game tick: ' + serverGameState.ticks;
-        drawText(ctx, text, box_x + padding, box_y + 15);
-        var text1 = 'Local tick: ' + GAME.state.ticks;
-        drawText(ctx, text1, box_x + padding, box_y + 30);
-        var text2 = 'Ping: ' + localPlayer.getPing() + " ms";
-        drawText(ctx, text2, box_x + padding, box_y + 45);
-        var text3 = 'Score: ' + localPlayer.score;
-
-        drawText(ctx, text3, box_x + padding, box_y + 60);
-    }
-
-    function drawScores() {
-        var boxwidth = 200;
-        var boxheight = GAME.state.players.length * 20;
-
-        var box_x = (canvas.width - boxwidth);
-        var box_y = 0;
-
-        var padding = 5;
-        var rowsize = 15;
-
-        ctx.fillStyle = 'rgba(255, 255, 255, 0.2)'
-        ctx.fillRect(box_x, box_y, boxwidth, boxheight);
-        if (serverGameState.scores) {
-            serverGameState.scores.forEach(function (score, index) {
-                var text = score.name + " : " + score.score;
-                drawText(ctx, text, box_x + padding, box_y + (index * rowsize + rowsize));
-            })
-        }
-    }
-
 };

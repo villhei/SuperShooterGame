@@ -17,54 +17,70 @@ var Keys = function (up, left, right, down, space, enter, shift, ctrl) {
         switch (c) {
             case 16: // Shift
                 that.shift = true;
+                e.preventDefault();
                 break;
             case 17: // Shift
                 that.ctrl = true;
+                e.preventDefault();
                 break;
             case 32: // Spacebar
-                that.space = true;
+                that.space = true
+                e.preventDefault();
                 break;
             // Controls
             case 37: // Left
                 that.left = true;
+                e.preventDefault();
                 break;
             case 38: // Up
                 that.up = true;
+                e.preventDefault();
                 break;
             case 39: // Right
                 that.right = true; // Will take priority over the left key
+                e.preventDefault();
                 break;
             case 40: // Down
                 that.down = true;
+                e.preventDefault();
                 break;
         }
         ;
     };
 
     var onKeyUp = function (e) {
+        e.preventDefault();
+
         var that = this,
             c = e.keyCode;
         switch (c) {
             case 16: // Shift
                 that.shift = false;
+                e.preventDefault();
                 break;
             case 17: // Shift
                 that.ctrl = false;
+                e.preventDefault();
                 break;
             case 32: // Spacebar
                 that.space = false;
+                e.preventDefault();
                 break;
             case 37: // Left
                 that.left = false;
+                e.preventDefault();
                 break;
             case 38: // Up
                 that.up = false;
+                e.preventDefault();
                 break;
             case 39: // Right
                 that.right = false;
+                e.preventDefault();
                 break;
             case 40: // Down
                 that.down = false;
+                e.preventDefault();
                 break;
         }
         ;
