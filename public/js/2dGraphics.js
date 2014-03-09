@@ -26,8 +26,8 @@ function Graphics(canvas) {
 }
 
 Graphics.prototype.onResize = function(event) {
-    this.canvas.height = window.innerHeight;
-    this.canvas.width = window.innerHeight;
+    this.canvas.height = window.innerHeight-50;
+    this.canvas.width = window.innerWidth-10;
 
 
 }
