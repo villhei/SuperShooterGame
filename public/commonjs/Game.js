@@ -28,7 +28,7 @@
         };
     }
 
-    Game.prototype.init = function() {
+    Game.prototype.init = function () {
 
         this.state = new GameState(this.area.size);
 
@@ -75,7 +75,7 @@
         if (movementData.accel_y == 1) {
             player.ship.accelerating = true;
             if (this.serverInstance && player.ping > 0) {
-                player.ship.startAcceleration(player.ping/2);
+                player.ship.startAcceleration(player.ping / 2);
             } else {
                 player.ship.startAcceleration();
             }
@@ -122,10 +122,10 @@
             }
         }
 
-        this.state.planets.forEach(function(planet) {
-          //  var gravityPull = planet.getGravityForce(ship.position);
-         //   var pullAngle = ship.position.angle(planet.position);
-        //    ship.applyPullForce(gravityPull/10, -pullAngle);
+        this.state.planets.forEach(function (planet) {
+            //  var gravityPull = planet.getGravityForce(ship.position);
+            //   var pullAngle = ship.position.angle(planet.position);
+            //    ship.applyPullForce(gravityPull/10, -pullAngle);
         })
     }
 
@@ -150,9 +150,29 @@
     }
 
     Game.prototype.respawnShip = function (player) {
-        var startX = Math.round(Math.random() * (this.area.size)),
-            startY = Math.round(Math.random() * (this.area.size));
-        player.ship = new Ship(500, 500, player.id);
+
+
+        var minimum_distance_from_planet = 100;
+        var valid = false;
+
+        while (valid === false) {
+            console.log("trying");
+            var startX = Math.round(Math.random() * (this.area.radius*0.7) - this.area.radius*0.7/2),
+                startY = Math.round(Math.random() * (this.area.radius*0.7) - this.area.radius*0.7/2);
+            var startPosition = new Vector(startX, startY);
+            if(!this.serverInstance) {
+                valid = true;
+            }
+            this.state.planets.forEach(function (planet) {
+
+                if (minimum_distance_from_planet + planet.radius < startPosition.distance(planet.position)) {
+                    valid = true;
+                }
+            });
+        }
+        console.log(player + " spawned to " + startPosition);
+        player.ship = new Ship(startPosition.x, startPosition.y, player.id);
+
     }
 
     Game.prototype.runGameCycle = function (timeDelta) {

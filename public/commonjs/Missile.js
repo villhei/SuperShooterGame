@@ -9,7 +9,7 @@
         this.position = position;
         this.speed = 30;
         this.velocity = velocity;
-        this.lifetime = 600;
+        this.lifetime = 1000;
         this.angle = angle;
         this.accelspeed = 0.3;
         this.turningspeed = 10;
