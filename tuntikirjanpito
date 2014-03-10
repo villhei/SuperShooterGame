@@ -1,0 +1,37 @@
+3h basic projektipystytys, multiplayer tutorialin läpikäynti
+3h laskennan liikuttamista backendiin, koodin refaktorointia ja moduulijakoa
+2h myöhemmin laskenta serveripäässä. oma client tunnistetaan
+3h pistelaskenta, uudelleenspawnaus
+
+SU
+
+4h refaktorointia pelilogiikan ja socket-koodin erotukseks
+2h hienosäätöä parametreihin
+2h aseiden luontia, afterburners
+2h pistetaulukointi, idle player kick
+
+TI
+
+6h refaktoroitu pelilogiikka client- ja serverriippumattomaksi ja timestepatuks
+6h client-side prediction, melkein toimiva
+2h asteroidien kasaaminen, impact koodi
+
+TO
+
+6h paranneltu client-side predictionia
+2h paranneltu nettikoodia yleensäkin
+2h planeettasysteemi
+
+PE
+
+2h Collision
+
+LA
+
+2h Collision
+
+SU
+
+4h uudelleenkirjotettu graffakoodi
+2h väkerretty pelialuesysteemi
+2h hiomisia loppua kohden
